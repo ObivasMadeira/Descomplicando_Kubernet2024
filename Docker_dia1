@@ -1,2 +1,11 @@
 Iniciar o pick 2024 com docker
 
+Primeira ferramenta utilizada é o :
+
+apt-get install debootstrap
+Esse cara é utilizado para baixar um sistema inteiro para dentro do seu sistema, criar um sistema de arquivos dentro do seu sistema.
+
+O comando a seguir é baixar trazer o sistema escolhido por vc para dentro da sua máquina, no exemplo usamos o debian:
+debootstrap stable /debian http://deb.debian.org/debian
+Esse comando ira realizar o download de td o sistema de diretórios necessários para rodar o debian dentro do seu sistema, no exemplo ele esta colocando td na pasta /debian
+
