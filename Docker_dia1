@@ -12,6 +12,25 @@ debootstrap stable /debian http://deb.debian.org/debian
 
 O comando a seguir é para subir o sistema debian dentro da pasta debian que foi criada
 unshare --mount --uts --ipc --net --map-root-user --user --pid --fork chroot /debian bash
+
+-mount: Isola o namespace de montagem do sistema de arquivos. Isso significa que o processo que está sendo executado dentro do namespace unshare terá seu próprio ponto de montagem, separado do restante do sistema.
+-uts: Isola o namespace de identificação do sistema (UTS). Isso permite que o processo tenha seu próprio hostname e informações de identificação do sistema, separados do restante do sistema.
+-ipc: Isola o namespace de comunicação interprocessual (IPC). Isso significa que o processo terá seu próprio conjunto de recursos IPC, como filas de mensagens e semáforos, isolados do restante do sistema.
+-net: Isola o namespace de rede. Isso permite que o processo tenha sua própria pilha de rede, interfaces de rede e tabelas de roteamento, separadas do restante do sistema.
+-map-root-user: Mapeia o ID de usuário dentro do namespace unshare para o ID de usuário 0 (root). Isso significa que, mesmo que o processo seja executado com um ID de usuário diferente fora do namespace unshare, dentro dele será tratado como root.
+-user: Isola o namespace de usuário. Isso permite que o processo tenha seu próprio conjunto de IDs de usuário e grupos, isolados do restante do sistema.
+-pid: Isola o namespace de PID (identificadores de processo). Isso permite que o processo tenha sua própria árvore de processos, separada do restante do sistema.
+-fork: Esta opção não é específica do unshare, mas sim do comando chroot. Ela instrui o comando chroot a criar um novo processo filho após mudar para o diretório raiz especificado.
+O comando chroot /debian bash no final do seu comando está mudando o diretório raiz para /debian e executando o shell Bash dentro desse novo ambiente raiz. Isso cria um novo ambiente isolado onde o shell Bash é executado com suas próprias configurações e recursos, de acordo com as opções fornecidas pelo unshare.
+
+Outro exemplo para testa o isolamento de recursos é rodar os comandos
+ip a
+1: lo: <LOOPBACK> mtu 65536 qdisc noop state DOWN group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+nesse caso ele não trouxe informação de rede pq não esta configurado no debian, mas se rodar o comando sem o --net, no caso sem isolamento de rede ele ira retornar as informações de rede da máquina local
+
+
+
 Após executar o comando iremos adentrar dentro do sistema debian.
 Se execurtamos o comando 
 ps -ef
@@ -25,3 +44,9 @@ root@obi-System-Product-Name:/# ps -ef
 UID          PID    PPID  C STIME TTY          TIME CMD
 root           1       0  0 18:56 ?        00:00:00 bash
 root           4       1  0 18:57 ?        00:00:00 ps -ef
+
+Podemos tb montar mais, como por exemplo
+mount -t sysfs none /sys
+mount -t tmpfs none /tmp
+
+Após essa sequencia de comando, nós criamos um isolamento no caso um container.
