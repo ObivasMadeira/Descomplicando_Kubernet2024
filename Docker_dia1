@@ -151,5 +151,14 @@ User namespace
 O mais recente namespace adicionado no kernel Linux, disponível desde a versão 3.8. É o responsável por manter o mapa de identificação de usuários em cada container.
 
 =================================================================
+CGROUP, utilizado para criar limitação de recurso, quando que pode ser usado, no exemplo iremos criar uma limitação do uso de cpu
+
+getconf _NPROCESSORS_ONLN (comando para listar o números de CPU)
+
+cgset -r cpu.cfs_quota_us=1000 giro (giro = ao novo cgroup criado com o comando "sudo cgcreate -g cpu,cpuacct,memory,blkio,devices,freezer:giros"
+nesse comando estamos informando que é para usar 1% ta cpu no container.
+
+
+
 
 
