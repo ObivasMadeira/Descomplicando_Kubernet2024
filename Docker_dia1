@@ -1,4 +1,4 @@
-Iniciar o pick 2024 com docker
+Iniciar o pick 2024 - criando um docker do zero sem usar o docker hehehe (ambiente isolado)
 
 Primeira ferramenta utilizada é o :
 
@@ -6,6 +6,22 @@ apt-get install debootstrap
 Esse cara é utilizado para baixar um sistema inteiro para dentro do seu sistema, criar um sistema de arquivos dentro do seu sistema.
 
 O comando a seguir é baixar trazer o sistema escolhido por vc para dentro da sua máquina, no exemplo usamos o debian:
-debootstrap stable /debian http://deb.debian.org/debian
 Esse comando ira realizar o download de td o sistema de diretórios necessários para rodar o debian dentro do seu sistema, no exemplo ele esta colocando td na pasta /debian
 
+debootstrap stable /debian http://deb.debian.org/debian
+
+O comando a seguir é para subir o sistema debian dentro da pasta debian que foi criada
+unshare --mount --uts --ipc --net --map-root-user --user --pid --fork chroot /debian bash
+Após executar o comando iremos adentrar dentro do sistema debian.
+Se execurtamos o comando 
+ps -ef
+sera retornado o erro de 
+"Error, do this: mount -t proc proc /proc"
+Esse erro é referente pq o /proc não esta montando, nesse exemplo iremos montar o /proc com o seguinte comando
+mount -t proc none /proc
+Após a execução do mesmo e realizar o comando 
+ps -ef novamente, será exibido o seguinte resultado
+root@obi-System-Product-Name:/# ps -ef
+UID          PID    PPID  C STIME TTY          TIME CMD
+root           1       0  0 18:56 ?        00:00:00 bash
+root           4       1  0 18:57 ?        00:00:00 ps -ef
