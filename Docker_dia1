@@ -167,6 +167,25 @@ Basicamente, significa que um novo recurso, seja ele um bloco no disco ou uma á
 Tá, mas o que isso tudo tem a ver com o Docker? Bom, como você sabe, o Docker usa um esquema de camadas, ou layers, e para montar essas camadas são usadas técnicas de Copy-On-Write. Um container é basicamente uma pilha de camadas compostas por N camadas read-only e uma, a superior, read-write.
 
 ====================================================================
+Docker
+
+Instalando docker
+curl -fsSL https://get.docker.com | bash
+
+Adicionado o usuário no grupo do docker OBS: não pode estar logado com root
+dockerd-rootless-setuptool.sh install
+
+subir um container do hello world
+docker container run hello-world
+Lista os containers em execução
+docker container ls
+Lista todos os container até mesmo os que já se foram
+docker container ls -a
+
+Ativar um container para que fique em execução
+
+
+
 
 
 
