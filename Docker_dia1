@@ -183,6 +183,35 @@ Lista todos os container até mesmo os que já se foram
 docker container ls -a
 
 Ativar um container para que fique em execução
+docker container run -it ubuntu (aonde i=interatividade e t=terminal, rodando esse comando vc irá entrar direto no container) OBS: nesse caso não foi supracitado a versão desejada, mas quando for real a ação sempre importante frizar a versão desejada assim evitando supresas hehehe
+
+Para sair do container pressione Ctrl + D, mas esse caso ira matar o container criado, no caso matou o bash que o principal processo em execução
+Para sair do container sem matar o mesmo pressione Ctrl + p + q.
+Assim quando executar o o comando:
+
+docker ps
+CONTAINER ID   IMAGE     COMMAND       CREATED          STATUS          PORTS     NAMES
+0b598153f046   ubuntu    "/bin/bash"   41 seconds ago   Up 40 seconds             vigilant_mors
+
+Irá retornar o container que vc iniciou.
+
+Acessar o container em execução
+docker container attach 0b598153f046 ( aonde 0b598153f046 é o CONTAINER ID, que vc pega ao executaro comando docker ps) OBS: esse comando só funcionar se tiver rodando o bash no container, pq se fizer isso no ngnix não ira funcionar
+
+Comando para pausar o container
+docker container pause vigilant_morse (aonde vigilant_morse é o nome do container)
+
+Comando para despausar o container
+docker container unpause vigilant_morse
+
+Remover um container
+docker container stop vigilant_morse
+docker container rm vigilant_morse apaga geral
+
+
+
+
+
 
 
 
