@@ -1,0 +1,37 @@
+Segunda mentoria do curso Pick 2024, hj vamos falar sobre segurança e redução de custos na cloud.
+
+- Iniciado a carreria devops
+  
+Atitude e comportamento (Pisa fofo heheh)
+    inciando em uma empresa, entre tranquilo, vc é junior, não julgue as decisões técnicas, de suas opniões tranquilas, agregue no setor
+    Sua carreria é uma maratona e não uma corrida de 100mts
+
+Aprendizado e Desenvolvimento
+    Descubra quem são as pessoas que querem ajudar mesmo,
+    Saiba fazer as perguntas e não trate as pessoas como google
+
+
+Integração e Networking
+    Entenda o que é uma entrega, pergunte como as coisas são feitas
+    Procura a comunidade, participe de palestras
+    
+Técnicas e ferramentas
+    Peça para fazer as PocS do time, quando testarem coisas novas, documentação dessa poc
+
+Cultura devops
+    entenda o produto do seu time, seja próximo aos desenvolvedores, sua entregas são produtos e vc precisa entender o consumidor
+===============================================================================
+Arquitetura baseado em eventos
+    Filas no AWS - Amazon SQS
+
+=================================================================================
+Como baixar os custos no cloud
+    Cast AI - ferramenta, Reduza seus custos de K8s pela metade fazendo com que seus clusters sejam continuamente rastreados e otimizados com recursos como dimensionamento automatizado, provisionamento, empacotamento de lixeiras e muito mais.
+    Visualize todas as suas despesas em um só lugar, monitore-as em tempo real e divida-as por cluster, cargas de trabalho, rótulos e outros conceitos K8s.
+    Ajuste automaticamente as solicitações e os limites da sua carga de trabalho para atender às
+    suas necessidades em constante mudança e alcançar uma relação custo-desempenho ideal.
+    https://cast.ai/
+
+
+
+
