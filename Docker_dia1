@@ -246,6 +246,9 @@ docker inspect obivas1
 Comando para iniciar um container sem necessáriamente entrar no mesmo na hora
 docker container run -d --name obivas5 nginx (usamos o -d e a imagem do ngnix)
 
+docker container run -d --name obivas5 -p 80:80 nginx (porta 80)
+
+
 Acessar o containers do nginx
 docker exec -it obivas bash
 
@@ -555,6 +558,14 @@ b34f4987bdce
 
 root@linuxtips:~#
 Para confirmar a remoção do container, utilize o comando "docker container ls -a".
+====================================================
 
+DockerFile
 
+Criação de imagem de cointeiner.
+
+FROM ubuntu:18.04
+RUN apt-get update && apt-get install nginx -y
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
 
