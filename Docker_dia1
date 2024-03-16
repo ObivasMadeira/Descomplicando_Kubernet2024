@@ -208,16 +208,25 @@ Remover um container
 docker container stop vigilant_morse
 docker container rm vigilant_morse apaga geral
 
+Pegar informações dos containers em execução (cpu e memória de cada um)
 
+docker container stats (use o parametro -a para ver tds os containers, até os excluídos)
 
+CONTAINER ID   NAME      CPU %     MEM USAGE / LIMIT     MEM %     NET I/O       BLOCK I/O   PIDS
+754943a37b59   obivas2   0.00%     896KiB / 15.52GiB     0.01%     866B / 0B     0B / 0B     1
+25361c2d5344   obivas1   0.00%     4.473MiB / 15.52GiB   0.03%     1.09kB / 0B   0B / 0B     1
 
+Comando para mostrar como esta o uso de cpu e memrória do container, mas não fica preso a tela
+docker container stats --no-stream
 
+COmando para demonstrar o uso de memória com o DD
+dd if=/dev/zero of=catota.img bs=8k count=2560k 
 
+Comando breve para ver os processos do container
+docker container top obivas1
 
-
-
-
-
+Comando para visualizar logs do container
+docker container logs --details obivas1
 
 
 
