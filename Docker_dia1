@@ -569,3 +569,8 @@ RUN apt-get update && apt-get install nginx -y
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
 
+Após criação do dockerfile, comando para subir o container usando o dockerfile criado
+primeiro add a imagem criado
+docker image build -t obivas01:1.0 .
+Segundo subindo o container
+docker container run -d -p 8080:80 --name obivas3 obivas01:1.0
