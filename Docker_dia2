@@ -406,3 +406,36 @@ primeiro add a imagem criado
 docker image build -t obivas01:1.0 .
 Segundo subindo o container
 docker container run -d -p 8080:80 --name obivas3 obivas01:1.0
+
+Continuando aula sobre docker file, criamos um novo dockerfile
+FROM ubuntu:18.04
+RUN apt-get update && apt-get install nginx -y
+EXPOSE 80
+COPY index.html /var/www/html/
+CMD ["nginx", "-g", "daemon off;"]
+WORKDIR /var/www/html
+ENV APP_VERSION 1.0.0
+
+Novo dockerfile
+FROM ubuntu:18.04
+LABEL maintainer="lucascm@tca.com.br"
+RUN apt-get update && apt-get install nginx -y
+EXPOSE 80
+COPY index.html /var/www/html/
+WORKDIR /var/www/html
+ENV APP_VERSION 1.0.0
+ENTRYPOINT ["nginx"] ##principal processo do meu container
+CMD ["-g", "daemon off;"] ##parametros do entrypoint
+
+Novo docker file
+FROM ubuntu:18.04
+LABEL maintainer="lucascm@tca.com.br"
+RUN apt-get update && apt-get install nginx curl -y
+EXPOSE 80
+ADD https://github.com/prometheus/node_exporter/releases/download/v1.6.0/node_exporter-1.6.0.linux-amd64.tar.gz /root/node-exporter
+COPY index.html /var/www/html/
+WORKDIR /var/www/html
+ENV APP_VERSION 1.0.0
+ENTRYPOINT ["nginx"]
+CMD ["-g", "daemon off;"]
+HEALTHCHECK --timeout=2s CMD curl -f localhost || exit 1
