@@ -661,6 +661,8 @@ Ou seja, assim você está iniciando o Apache passando a instrução para que el
 
 Para maiores detalhes sobre como criar imagens, veja essa apresentação criada pelo Jeferson: https://www.slideshare.net/jfnredes/images-deep-dive.
 ======================================================
+Técnica para usar múltiplos estágios de construção para otimizar imagens.
+
 DockerFile MultiStage
 EX para verificar o tamanho que vai ficar
 Tamanho dessa imagem 1.1gb
@@ -777,6 +779,83 @@ A diferença de tamanho é brutal, pois em nossa primeira imagem precisamos ter 
 Ou seja, utilizamos o primeiro bloco para compilar a nossa app e o segundo bloco somente para executá-la. Simples assim, simples como voar! :D
 
 ==========================================================================
+Declarando uma variavel no dockerfile usando "ENV"
+
+FROM golang:1.18 as buildando
+WORKDIR /app
+COPY . ./
+RUN go build -o /app/hello
+
+FROM alpine:3.15.9
+COPY --from=buildando /app/hello /app/hello
+ENV app="hello_world"
+CMD ["/app/hello"]
+
+buidl passando argumentos
+docker build -t go-teste:5.0 --build-arg giropops=girus .
+
+ARG é usando no momento do buil (Define uma variável para ser usada durante a fase de construção da imagem.)
+ENV transforme em uma variavel dentro do container
+
+===========================================================================
+Usando VOLUME
+
+FROM golang:1.18 as buildando
+WORKDIR /app
+COPY . ./
+RUN go build -o /app/hello
+
+FROM alpine:3.15.9
+COPY --from=buildando /app/hello /app/hello
+ENV APP="hello_world"
+ARG GIROPOPS="strigus"
+ENV GIROPOP=#GIROPOPS
+RUN echo "o giropops é: $GIROPOPS"
+VOLUME /app/dados
+CMD ["/app/hello"]
+===============================================================================
+Glossário de Dockerfile
+ADD: Instrução utilizada no Dockerfile para copiar arquivos e diretórios para dentro do container.
+CMD: Instrução utilizada no Dockerfile para especificar o comando padrão a ser executado quando o container for iniciado.
+COPY: Instrução utilizada no Dockerfile para copiar arquivos e diretórios para dentro do container.
+ENTRYPOINT: Instrução utilizada no Dockerfile para especificar o comando padrão a ser executado quando o container for iniciado, porém não pode ser substituído ao iniciar o container.
+ENV: Instrução utilizada no Dockerfile para definir variáveis de ambiente que serão utilizadas durante a construção e execução do container.
+EXPOSE: Instrução utilizada no Dockerfile para definir as portas em que o container irá escutar, permitindo a comunicação com outros containers ou com o host.
+FROM: Instrução utilizada no Dockerfile para especificar a imagem base que será utilizada para construir o container.
+LABEL: Instrução utilizada no Dockerfile para adicionar metadados à imagem, como informações do autor e descrição.
+MAINTAINER: Instrução utilizada no Dockerfile para especificar o autor da imagem.
+RUN: Instrução utilizada no Dockerfile para executar comandos durante a construção do container.
+USER: Instrução utilizada no Dockerfile para especificar o usuário que será usado para executar os comandos dentro do container.
+VOLUME: Instrução utilizada no Dockerfile para definir um ponto de montagem de volume, permitindo o compartilhamento de dados entre o host e o container.
+WORKDIR: Instrução utilizada no Dockerfile para definir o diretório de trabalho dentro do container, onde os comandos serão executados.
+Lembre-se de sempre consultar a documentação oficial do Docker para obter informações completas sobre cada termo.
+==================================================================================
+Utilizando o dockerhub donwload de imagem e upload de imagem
+
+Enviando uma imagem
+obi@obi-System-Product-Name:/home/pick2024/Day02/DockerFiles$ docker image ls
+REPOSITORY        TAG       IMAGE ID       CREATED             SIZE
+go-teste          4.0       108c9c262e67   52 minutes ago      7.35MB
+obivas/go-teste   4.0       108c9c262e67   52 minutes ago      7.35MB
+go-teste          5.0       1351c4e9cdde   52 minutes ago      7.35MB
+obivas/go-teste   5.0       1351c4e9cdde   52 minutes ago      7.35MB
+<none>            <none>    0d7acc669af4   56 minutes ago      7.35MB
+<none>            <none>    eab7c3d72205   About an hour ago   7.35MB
+<none>            <none>    5c2d5125a8d8   About an hour ago   7.35MB
+go-teste          2.0       c5f21c8c1cbc   24 hours ago        7.35MB
+go-teste          3.0       08efd6d22283   24 hours ago        7.35MB
+go-teste          1.0       4d8b23375942   24 hours ago        1.11GB
+obivas5           2.0       7b3eed173900   9 days ago          169MB
+obivas01          1.0       a38bc80f7268   11 days ago         169MB
+ubuntu            latest    ca2b0f26964c   4 weeks ago         77.9MB
+nginx             latest    92b11f67642b   6 weeks ago         187MB
+centos            7         eeb6ee3f44bd   2 years ago         204MB
+obi@obi-System-Product-Name:/home/pick2024/Day02/DockerFiles$ docker push obivas/go-teste:5.0  
+The push refers to repository [docker.io/obivas/go-teste]
+5f70bf18a086: Pushed 
+2129e946629c: Pushed 
+579bc0f2bef2: Mounted from library/alpine 
+5.0: digest: sha256:972ef18b918d5095bebddb9a62fa6a46471a9f644d0732493a1beda377e0cd53 size: 945
 
 
 
