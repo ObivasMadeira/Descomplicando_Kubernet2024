@@ -417,6 +417,7 @@ WORKDIR /var/www/html
 ENV APP_VERSION 1.0.0
 
 Novo dockerfile
+
 FROM ubuntu:18.04
 LABEL maintainer="lucascm@tca.com.br"
 RUN apt-get update && apt-get install nginx -y
@@ -441,7 +442,7 @@ CMD ["-g", "daemon off;"]
 HEALTHCHECK --timeout=2s CMD curl -f localhost || exit 1
 
 FROM ubuntu:18.04
-LABEL maintainer="jeferson@linuxtips.io"
+LABEL maintainer="lucas"
 RUN apt-get update && apt-get install nginx curl -y && rm -rf /var/lib/apt/lists/*
 EXPOSE 80
 ADD node_exporter-1.6.0.linux-amd64.tar.gz /root/node-exporter
@@ -453,8 +454,8 @@ CMD ["-g", "daemon off;"]
 HEALTHCHECK --timeout=2s CMD curl -f localhost || exit 1
 
 Dockerfile para descompactar o node_exporte, mas lembrando que o mesmo precisa estar na máquina local para descontrair no local desejado
-FROM ubuntu:18.04
-LABEL maintainer="jeferson@linuxtips.io"
+FROM debian:10
+LABEL maintainer="lucascm@tca.com.br"
 RUN apt-get update && apt-get install nginx curl -y && rm -rf /var/lib/apt/lists/*
 EXPOSE 80
 ADD node_exporter-1.6.0.linux-amd64.tar.gz /root/node-exporter
@@ -495,24 +496,16 @@ Por enquanto, vamos apenas criar um arquivo chamado "Dockerfile" e adicionar o c
 # cd apache
 # vim Dockerfile
 FROM debian:10
-
 RUN apt-get update && apt-get install -y apache2 && apt-get clean
-
 ENV APACHE_LOCK_DIR="/var/lock"
-
 ENV APACHE_PID_FILE="/var/run/apache2.pid"
-
 ENV APACHE_RUN_USER="www-data"
-
 ENV APACHE_RUN_GROUP="www-data"
-
 ENV APACHE_LOG_DIR="/var/log/apache2"
-
 LABEL description="Webserver"
-
 VOLUME /var/www/html/
-
 EXPOSE 80
+
 Muito bom! Agora que você já adicionou as informações conforme o exemplo, vamos entender cada seção utilizada nesse nosso primeiro dockerfile:
 
 FROM -- Indica a imagem a servir como base.
@@ -603,30 +596,19 @@ A primeira coisa é deixar o nosso dockerfile como segue:
 
 # vim Dockerfile
 FROM debian:10
-
 RUN apt-get update && apt-get install -y apache2 && apt-get clean
-
 ENV APACHE_LOCK_DIR="/var/lock"
-
 ENV APACHE_PID_FILE="/var/run/apache2/apache2.pid"
-
 ENV APACHE_RUN_USER="www-data"
-
 ENV APACHE_RUN_DIR="/var/run/apache2"
-
 ENV APACHE_RUN_GROUP="www-data"
-
 ENV APACHE_LOG_DIR="/var/log/apache2"
-
 LABEL description="Webserver"
-
 VOLUME /var/www/html/
-
 EXPOSE 80
-
 ENTRYPOINT ["/usr/sbin/apachectl"]
-
 CMD ["-D", "FOREGROUND"]
+
 Perceba que agora nós adicionamos mais duas opções: o ENTRYPOINT e o CMD!
 
 Ficou curioso sobre o que eles fazem? Então 'bora aprender muito mais opções possíveis de serem adicionadas em um dockerfile!
@@ -678,3 +660,123 @@ No shell, por exemplo, a execução ficaria assim:
 Ou seja, assim você está iniciando o Apache passando a instrução para que ele seja iniciado em primeiro plano, como deve ser. :D
 
 Para maiores detalhes sobre como criar imagens, veja essa apresentação criada pelo Jeferson: https://www.slideshare.net/jfnredes/images-deep-dive.
+======================================================
+DockerFile MultiStage
+EX para verificar o tamanho que vai ficar
+Tamanho dessa imagem 1.1gb
+FROM golang:1.18
+COPY . ./
+WORKDIR /app
+RUN go build -o /app/hello
+CMD ["/app/hello"]
+
+Imagem mais compacta usando multistage
+FROM golang:1.18 as buildando
+WORKDIR /app
+COPY . ./
+RUN go build -o /app/hello
+
+FROM alpine:3.15.9
+COPY --from=buildando /app/hello /app/hello
+CMD ["/app/hello"]
+==============================================================
+Multi-stage
+Um importante e recente recurso adicionado ao dockerfile visa facilitar a vida de quem pretende criar imagens de containers de forma efetiva. Esse cara é o multi-stage!
+O multi-stage nada mais é do que a possibilidade de você criar uma espécie de pipeline em nosso dockerfile, podendo inclusive ter duas entradas FROM.
+Esse recurso é muito utilizado quando queremos, por exemplo, compilar a nossa aplicação em um container e executá-la, porém não queremos ter aquela quantidade enorme de pacotes instalados em nossos containers necessários sempre quando se quer compilar códigos de alguma linguagem, como C, Java ou Golang.
+Vamos a um exemplo para que possamos entender melhor como isso funciona!
+Para isso, preparei uma app escrita em Golang superavançada para o nosso teste:
+
+# vim goapp.go
+package main
+
+import "fmt"
+
+func main() {
+
+    fmt.Println("GIROPOPS STRIGUS GIRUS - LINUXTIPS")
+
+}
+Achou que seria algo avançado? Impossível, fomos nós que fizemos. :D
+
+Bem, agora vamos criar um dockerfile para criar a nossa imagem e assim executar a nossa app.
+
+# vim Dockerfile
+FROM golang:1.18
+WORKDIR /app
+COPY . ./
+RUN go mod init hello
+RUN go build -o /app/hello
+CMD ["/app/hello"]
+
+Pronto! Agora vamos realizar o build.
+
+# docker build -t goapp:1.0 .
+Listando a nossa imagem:
+
+# docker image ls | grep goapp
+goapp    1.0    50451808b384    11 seconds ago      781MB
+Agora vamos executá-la e ver a nossa fantástica app em execução:
+
+# docker container run -ti goapp:1.0
+GIROPOPS STRIGUS GIRUS -- LINUXTIPS
+Pronto! Nossa app e nossa imagem estão funcionando! Sucesso!
+
+Porém, podemos melhorar muita coisa se começarmos a utilizar o nosso poderoso recurso, o multi-stage!
+
+Vamos refazer o nosso dockerfile utilizando o multi-stage, entender como ele funciona e a diferença entre as duas imagens.
+
+Vamos deixar nosso dockerfile dessa maneira:
+
+# vim Dockerfile
+FROM golang:1.18 as buildando
+WORKDIR /app
+COPY . ./
+RUN go mod init hello
+RUN go build -o /app/hello
+
+FROM alpine:3.15.9
+COPY --from=buildando /app/hello /app/hello
+CMD ["/app/hello"]
+
+Perceba que agora nós temos duas entradas FROM, o que não era possível antes do multi-stage. Mas por que isso?
+
+O que está acontecendo é que agora temos o dockerfile dividido em duas seções. Cada entrada FROM define o início de um bloco, uma etapa.
+
+Então, em nosso primeiro bloco temos:
+
+FROM golang AS buildando -- Estamos utilizando a imagem do Golang para criação da imagem de container, e aqui estamos apelidando esse bloco como "buildando".
+
+ADD . ./ -- Adicionando o código de nossa app dentro do container.
+
+WORKDIR /app -- Definindo que o diretório de trabalho é o "/app", ou seja, quando o container iniciar, estaremos nesse diretório.
+
+RUN go build -o /app/hello -- Vamos executar o build de nossa app Golang.
+Já no segundo bloco temos o seguinte:
+
+FROM alpine:3.15.9 -- Iniciando o segundo bloco e utilizando a imagem do Alpine para criação da imagem de container.
+
+COPY --from=buildando /app/hello /app/hello-- Aqui está a mágica: vamos copiar do bloco chamado "buildando" um arquivo dentro de "/app/hello" para o diretório "/app" do container que estamos tratando nesse bloco, ou seja, copiamos o binário que foi compilado no bloco anterior e o trouxemos para esse.
+
+CMD ["/app/hello"] -- Aqui vamos executar a nossa sensacional app. :)
+
+Agora que já entendemos todas as linhas do nosso novo dockerfile, 'bora realizar o build dele.
+
+# docker build -t goapp_multistage:1.0 .
+Vamos executar a nossa imagem para ver se está tudo funcionando:
+
+# docker container run -ti goapp_multistage:1.0
+GIROPOPS STRIGUS GIRUS - LINUXTIPS
+Será que existe diferença de tamanho entre elas? Vamos conferir:
+
+# docker image ls | grep goapp
+goapp_multistage  1.0    dfe57485b7f0    22 seconds ago    7.07MB
+goapp             1.0    50451808b384    15 minutes ago     781MB
+A diferença de tamanho é brutal, pois em nossa primeira imagem precisamos ter um monte de pacotes para que o build da app Golang ocorra. Já em nossa segunda imagem também utilizamos a imagem do Golang e todos os seus pacotes para buildar a nossa app, porém descartamos a primeira imagem e somente copiamos o binário para o segundo bloco, onde estamos utilizando a imagem do Alpine, que é superenxuta.
+
+Ou seja, utilizamos o primeiro bloco para compilar a nossa app e o segundo bloco somente para executá-la. Simples assim, simples como voar! :D
+
+==========================================================================
+
+
+
