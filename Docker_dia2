@@ -746,22 +746,17 @@ Perceba que agora nós temos duas entradas FROM, o que não era possível antes 
 O que está acontecendo é que agora temos o dockerfile dividido em duas seções. Cada entrada FROM define o início de um bloco, uma etapa.
 
 Então, em nosso primeiro bloco temos:
-
+===================================================
 FROM golang AS buildando -- Estamos utilizando a imagem do Golang para criação da imagem de container, e aqui estamos apelidando esse bloco como "buildando".
-
 ADD . ./ -- Adicionando o código de nossa app dentro do container.
-
 WORKDIR /app -- Definindo que o diretório de trabalho é o "/app", ou seja, quando o container iniciar, estaremos nesse diretório.
-
 RUN go build -o /app/hello -- Vamos executar o build de nossa app Golang.
 Já no segundo bloco temos o seguinte:
-
 FROM alpine:3.15.9 -- Iniciando o segundo bloco e utilizando a imagem do Alpine para criação da imagem de container.
-
 COPY --from=buildando /app/hello /app/hello-- Aqui está a mágica: vamos copiar do bloco chamado "buildando" um arquivo dentro de "/app/hello" para o diretório "/app" do container que estamos tratando nesse bloco, ou seja, copiamos o binário que foi compilado no bloco anterior e o trouxemos para esse.
-
 CMD ["/app/hello"] -- Aqui vamos executar a nossa sensacional app. :)
 
+===================================
 Agora que já entendemos todas as linhas do nosso novo dockerfile, 'bora realizar o build dele.
 
 # docker build -t goapp_multistage:1.0 .
