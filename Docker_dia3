@@ -141,6 +141,37 @@ Por que o Docker Scout é importante?
 O Docker Scout é uma ferramenta valiosa para melhorar a segurança dos containers. Ao identificar proativamente as vulnerabilidades e fornecer correções recomendadas, ajuda as equipes de desenvolvimento a fortalecer suas imagens de containers e, por sua vez, os aplicativos que estão sendo executados nesses containers. Em um mundo onde a segurança do software é fundamental, o Docker Scout é uma ferramenta indispensável para qualquer equipe de desenvolvimento orientada a containers.
 ==================================================================================
 
+Usando a ferramento cosing para assinar nossas imagens
+instalando o cosing
+# binary
+curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
+sudo mv cosign-linux-amd64 /usr/local/bin/cosign
+sudo chmod +x /usr/local/bin/cosign
 
+Após instalar o mesmo vamos gerar o key-pair
+cosing generate-key-pair
 
+cosign generate-key-pair
+Enter password for private key: 
+Enter password for private key again: 
+Private key written to cosign.key
+Public key written to cosign.pub
+
+Para assinar uma imagem é preciso estar no dockerhub
+Após enviar a imagem para a dockerhub, vamos assinar a mesma usando o comando
+cosign sign -key cosign.key obivas/giropops-senhas-assinada:1.0
+
+Depois de assinar será criar uma chave shar no seu repositório junto com a imagem.
+
+Verificar a imagem assinada, usamos o comando:
+
+cosign verify --key cosign.pub obivas/giropops-senhas-assinada:1.0
+
+Verification for index.docker.io/obivas/giropops-senhas-assinada:1.0 --
+The following checks were performed on each of these signatures:
+  - The cosign claims were validated
+  - Existence of the claims in the transparency log was verified offline
+  - The signatures were verified against the specified public key
+
+[{"critical":{"identity":{"docker-reference":"index.docker.io/obivas/giropops-senhas-assinada"},"image":{"docker-manifest-digest":"sha256:40053a73da23d6886b172900a459a1b65a0b34cc772fbb0f922926eb6a79b69a"},"type":"cosign container image signature"},"optional":{"Bundle":{"SignedEntryTimestamp":"MEQCICATMDtgSSuTXj3gxOY6bQcicWzR25yW3X54BVHNBE7xAiAOqkYcin/dGugZWTgb+Xzy8zd4k6Sm+/Z9y3oCJhskaA==","Payload":{"body":"eyJhcGlWZXJzaW9uIjoiMC4wLjEiLCJraW5kIjoiaGFzaGVkcmVrb3JkIiwic3BlYyI6eyJkYXRhIjp7Imhhc2giOnsiYWxnb3JpdGhtIjoic2hhMjU2IiwidmFsdWUiOiI1MDRkNWE5NmM1ZjZlNDE1NTNlNzVhOTc5MzkwZjFkOTQ2NTFkOWZjMzA3NzdiMzU4Y2FkZmY1ZDBlNDFhNWZhIn19LCJzaWduYXR1cmUiOnsiY29udGVudCI6Ik1FVUNJR0huU1lnUG5uRjI3V1VuMUtTYUEwbTBSQ2RHV3NIRVlOcU5uUlNOSXpzbkFpRUE3TVhiNEFHb3cxK0pmV2MrZjlVczdZTjdFUENMV1NKbWRhME9GWllvU21RPSIsInB1YmxpY0tleSI6eyJjb250ZW50IjoiTFMwdExTMUNSVWRKVGlCUVZVSk1TVU1nUzBWWkxTMHRMUzBLVFVacmQwVjNXVWhMYjFwSmVtb3dRMEZSV1VsTGIxcEplbW93UkVGUlkwUlJaMEZGZVZWV0wya3haR3gzVVdaQksyNUVXV0pMTURkU1ZEaEhiemN3Y0FwQmNITktVMlJvV1RKeE9FbDNhMjR2TlRKTFlTdEtkMjF3YlhCeE5FeEVVa1ZIU3pONU9EQkdXbUpMTm5OaVUzbHpVQzlRWkhGdk5VMTNQVDBLTFMwdExTMUZUa1FnVUZWQ1RFbERJRXRGV1MwdExTMHRDZz09In19fX0=","integratedTime":1712689682,"logIndex":84425685,"logID":"c0d23d6ad406973f9559f3ba2d1ca01f84147d8ffc5b8445c224f98b9591801d"}}}}]
 
