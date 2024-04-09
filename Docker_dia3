@@ -1,3 +1,58 @@
+Comando utilizado para verificar uma porta está em uso
+
+ss -atunp | grep 6379 (porta do redis)
+
+===============================================================================
 Criando melhores imagens, mais seguras e mais performáticas.
 
+Imagem de uma aplicação python
+
+FROM python:3.8-alpine ## imagem utilizada para compactar o tamanho da imagem
+WORKDIR /app
+COPY . /app
+RUN pip install --no-cache-dir -r requirements.txt
+EXPOSE 5000
+ENV REDIS_HOST=172.17.0.2
+ENTRYPOINT ["python", "-m", "flask", "run", "--host=0.0.0.0"]
+
+===================================================================================
+
+Imagem do redis para essa aplicação
+
+FROM debian:buster AS builder
+RUN apt-get update && apt-get install -y redis-server
+RUN apt-get install -y libatomic1
+
+FROM debian:buster
+COPY --from=builder /usr/bin/redis* /usr/bin/
+ENV REDIS_HOST localhost
+CMD ["redis-server", "--bind", "0.0.0.0"]
+
+====================================================================================
+Comando para verificar quantas camadas tem sua imagem
+docker history obivas/linuxtips-giropops-senhas:1.0
+
+IMAGE          CREATED        CREATED BY                                      SIZE      COMMENT
+7d323585f2e2   4 days ago     ENTRYPOINT ["python" "-m" "flask" "run" "--h…   0B        buildkit.dockerfile.v0
+<missing>      4 days ago     ENV REDIS_HOST=172.17.0.2                       0B        buildkit.dockerfile.v0
+<missing>      4 days ago     RUN /bin/sh -c pip install -r requirements.t…   14MB      buildkit.dockerfile.v0
+<missing>      4 days ago     COPY . /app # buildkit                          344kB     buildkit.dockerfile.v0
+<missing>      4 days ago     WORKDIR /app                                    0B        buildkit.dockerfile.v0
+<missing>      2 weeks ago    CMD ["python3"]                                 0B        buildkit.dockerfile.v0
+<missing>      2 weeks ago    RUN /bin/sh -c set -eux;   wget -O get-pip.p…   9.91MB    buildkit.dockerfile.v0
+<missing>      2 weeks ago    ENV PYTHON_GET_PIP_SHA256=dfe9fd5c28dc98b5ac…   0B        buildkit.dockerfile.v0
+<missing>      2 weeks ago    ENV PYTHON_GET_PIP_URL=https://github.com/py…   0B        buildkit.dockerfile.v0
+<missing>      2 weeks ago    ENV PYTHON_SETUPTOOLS_VERSION=57.5.0            0B        buildkit.dockerfile.v0
+<missing>      2 weeks ago    ENV PYTHON_PIP_VERSION=23.0.1                   0B        buildkit.dockerfile.v0
+<missing>      2 weeks ago    RUN /bin/sh -c set -eux;  for src in idle3 p…   0B        buildkit.dockerfile.v0
+<missing>      2 weeks ago    RUN /bin/sh -c set -eux;   apk add --no-cach…   28.7MB    buildkit.dockerfile.v0
+<missing>      2 weeks ago    ENV PYTHON_VERSION=3.8.19                       0B        buildkit.dockerfile.v0
+<missing>      2 weeks ago    ENV GPG_KEY=E3FF2839C048B25C084DEBE9B26995E3…   0B        buildkit.dockerfile.v0
+<missing>      2 weeks ago    RUN /bin/sh -c set -eux;  apk add --no-cache…   1.63MB    buildkit.dockerfile.v0
+<missing>      2 weeks ago    ENV LANG=C.UTF-8                                0B        buildkit.dockerfile.v0
+<missing>      2 weeks ago    ENV PATH=/usr/local/bin:/usr/local/sbin:/usr…   0B        buildkit.dockerfile.v0
+<missing>      2 months ago   /bin/sh -c #(nop)  CMD ["/bin/sh"]              0B        
+<missing>      2 months ago   /bin/sh -c #(nop) ADD file:37a76ec18f9887751…   7.37MB    
+
+=====================================================================================
 
