@@ -206,4 +206,20 @@ Alterações em um volume não irão com a imagem quando você fizer uma cópia 
 Volumes continuam a existir mesmo se você deletar o container.
 Dito isso, chega de papo. Vamos aprender a adicionar um volume em um container.
 
+=========================================================
+Tipos de Volumes
+BIND e TMPFS, o local aonde os volumes sempre são guardados, /var/lib/docker/volumes/
+
+Bind
+Comando para subir um container debian com volume
+docker run -it --name testando-volumes --mount type=bind,source=/home/pick2024/Day03,target=/giropops-senha debian
+
+Comando para subir um container debian com volume somente leitura
+docker run -it --name testando-volumes --mount type=bind,source=/home/pick2024/Day03,target=/giropops-senha,ro debian
+
+
+
+
+
+
 
