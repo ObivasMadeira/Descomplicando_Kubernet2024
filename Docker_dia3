@@ -260,3 +260,13 @@ Com o "docker volume inspect" você consegue obter detalhes do seu container, co
 A saída do comando "docker volume inspect" retorna mais informação do que somente o path do diretório no host. Vamos usar a opção "--format" ou "-f" para filtrar a saída do "inspect".
 docker volume inspect --format '{{ .Mountpoint }}' giropops
 /var/lib/docker/volumes/giropopos/_data
+======================================================================
+
+Subindo um conteiner nginx com volume
+docker run -d --name testando-volumes -v kenobi:/usr/share/nginx/html -p 8080:80 nginx
+Comando para apagar e matar o conteiner
+docker rm -f nomedele
+
+===================================================================
+Network em conteiner
+
