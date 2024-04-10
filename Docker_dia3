@@ -217,6 +217,23 @@ docker run -it --name testando-volumes --mount type=bind,source=/home/pick2024/D
 Comando para subir um container debian com volume somente leitura
 docker run -it --name testando-volumes --mount type=bind,source=/home/pick2024/Day03,target=/giropops-senha,ro debian
 
+Usando Volume
+Criando volume
+docker volume create kenobi
+docker volume ls
+docker volume inspect kenobi
+[
+    {
+        "CreatedAt": "2024-04-10T11:11:22-03:00",
+        "Driver": "local",
+        "Labels": null,
+        "Mountpoint": "/home/obi/.local/share/docker/volumes/kenobi/_data",
+        "Name": "kenobi",
+        "Options": null,
+        "Scope": "local"
+    }
+]
+
 
 
 
