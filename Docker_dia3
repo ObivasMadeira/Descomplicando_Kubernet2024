@@ -270,3 +270,25 @@ docker rm -f nomedele
 ===================================================================
 Network em conteiner
 
+Subir os dois container para teste de rede
+
+docker run -it -p 5000:5000 obivas/giropops-senhas-ok:1.0
+docker run -d --name redis04 -p 6379:6379 obivas/redis:1.0
+
+Comando para criar um network
+docker network create -d mcvlan strigus
+Comando para inspesionar a network criada
+docker network inspect strigus
+Subir um container para usar a rede nova
+docker run -d --name redis --network strigus -p 6379:6379 redis
+
+Criamos uma rede e quando for subir o container adicionamos para qual rede ele vai participar, assim tds os container vão se comunicar pelos seus nomes se for necesários, nosso exemplos subimos dois containers, giropops-senha e redis.
+Subimos ambos com a informação de --network nome_da_rede, mas no container da aplicação adcionamos a  variavél ENV:redis, como ambos estão na mesma rede vão conseguir se comunicar.
+
+Também podemos fazer a conexão entre containers usando o comando --link, não é uma boa prática mas tb funciona
+docker run -d --name giropops-senhas --link redis:redis --env REDIS_HOST=redis -p 5000:5000 obivas/giropops-senha:1.1
+
+Usando o comando connect para conectar uma rede ao um container já em execução
+docker network connect strigus giropops-senhas
+
+
