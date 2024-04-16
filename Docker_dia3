@@ -291,4 +291,9 @@ docker run -d --name giropops-senhas --link redis:redis --env REDIS_HOST=redis -
 Usando o comando connect para conectar uma rede ao um container já em execução
 docker network connect strigus giropops-senhas
 
+========================================================================
+Limitando recurso ao subir um container
+docker run -d --name redis --network strigus -p 6379:6379 --cpu 0.5 --memory 64m redis
+ou
+docker run -d --name redis --network strigus -p 6379:6379 --cpu 0.5 --memory 64m --memory-swap 128m redis (limitando a memória swap lembrando que a swap precisa ser maior que a memory )
 
