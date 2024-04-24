@@ -403,3 +403,102 @@ networks:
 volumes:
   obivas:
 
+Criando vários container usando o composo (--scale )
+
+docker compose -f docker-compose.yaml up -d --scale giropops-senha=3
+OBS: cuidando com as portas
+
+Subindo container com o compose e limitando recursos e tb com dependência, o que vai subir primeiro.
+
+DockerFile
+version: '3'
+services:
+  giropops-senha:
+    build: ./Dockerfile
+    ports:
+      - "5000:5000"
+    networks:
+      - obi
+    environment:
+      REDIS_HOST: redis
+    volumes:
+      - obivas:/obivas
+    depends_on:
+      - redis
+         deploy:
+         resources:
+         reservations:
+         cpus: '0.25'
+         memory: 128M
+         limits:
+         cpus: '0.5'
+         memory: 256M
+
+  redis:
+    image: obivas/redis:1.0
+    networks:
+      - obi
+    volumes:
+      - obivas:/obivas
+
+networks:
+  obi:
+    driver: bridge
+
+volumes:
+  obivas:
+======================================
+Docker compose helphcheck
+
+version: '3.8'
+services:
+  giropops-senha:
+    build: ./Dockerfile
+    ports:
+      - "5000:5000"
+    networks:
+      - obi
+    environment:
+      REDIS_HOST: redis
+    volumes:
+      - obivas:/obivas
+    depends_on:
+      - redis
+        # deploy:
+        # resources:
+        # reservations:
+        # cpus: '0.25'
+        # memory: 128M
+        # limits:
+        # cpus: '0.5'
+        # memory: 256M
+
+  # healthcheck:
+      # test: ["CMD", "curl", "-f", "http://localhost:5000"]
+      # interval: 30s
+      # timeout: 5s
+      # retries: 3
+      # start_period: 10s
+  redis:
+    image: obivas/redis:1.0
+    ports:
+      - "6379:6379"
+        # command: redis-server --appendonly yes
+    networks:
+      - obi
+    volumes:
+      - obivas:/obivas
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 2s
+      retries: 3
+      start_period: 10s
+
+networks:
+  obi:
+    driver: bridge
+
+volumes:
+  obivas:
+========================================================
