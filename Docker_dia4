@@ -1,0 +1,308 @@
+Introdução a volumes no Docker
+Bom, volumes nada mais são que diretórios externos ao container, que são montados diretamente nele, e dessa forma bypassam seu filesystem, ou seja, não seguem aquele padrão de camadas que falamos. Decepcionei você? Que bom, sinal de que é bem simples e você não vai ter problemas para entender. :)
+A principal função do volume é persistir os dados. Diferentemente do filesystem do container, que é volátil e toda informação escrita nele é perdida quando o container morre, quando você escreve em um volume aquele dado continua lá, independentemente do estado do container.
+Existem algumas particularidades entre os volumes e containers que valem a pena ser mencionadas:
+O volume é inicializado quando o container é criado.
+Caso ocorra de já haver dados no diretório em que você está montando como volume, ou seja, se o diretório já existe e está "populado" na imagem base, aqueles dados serão copiados para o volume.
+Um volume pode ser reusado e compartilhado entre containers.
+Alterações em um volume são feitas diretamente no volume.
+Alterações em um volume não irão com a imagem quando você fizer uma cópia ou snapshot de um container.
+Volumes continuam a existir mesmo se você deletar o container.
+Dito isso, chega de papo. Vamos aprender a adicionar um volume em um container.
+
+=========================================================
+Tipos de Volumes
+BIND e TMPFS, o local aonde os volumes sempre são guardados, /var/lib/docker/volumes/
+
+Bind
+Comando para subir um container debian com volume
+docker run -it --name testando-volumes --mount type=bind,source=/home/pick2024/Day03,target=/giropops-senha debian
+
+Comando para subir um container debian com volume somente leitura
+docker run -it --name testando-volumes --mount type=bind,source=/home/pick2024/Day03,target=/giropops-senha,ro debian
+
+Usando Volume
+Criando volume
+docker volume create kenobi
+docker volume ls
+docker volume inspect kenobi
+[
+    {
+        "CreatedAt": "2024-04-10T11:11:22-03:00",
+        "Driver": "local",
+        "Labels": null,
+        "Mountpoint": "/home/obi/.local/share/docker/volumes/kenobi/_data",
+        "Name": "kenobi",
+        "Options": null,
+        "Scope": "local"
+    }
+]
+==============================================================
+Criando volumes
+Agora vamos criar os volumes da maneira mais elegante e atual. Hoje temos a possibilidade de realizar o gerenciamento de volumes de maneira muito simples e inteligente.
+Sempre que criamos um volume, ele cria um diretório com o mesmo nome dentro de "/var/lib/docker/volumes/".
+No exemplo a seguir, o volume "giropops" seria então criado em "/var/lib/docker/volumes/giropops"; com isso, todos os arquivos disponíveis nesse diretório também estariam disponíveis no local indicado no container. Vamos aos exemplos! :D
+É possível fazer a criação de volumes e toda a sua administração através do comando:
+# docker volume create giropops
+É possível removê-lo através do comando:
+# docker volume rm giropops
+Para verificar detalhes sobre esse volume:
+# docker volume inspect giropops
+Para remover os volumes que não estão sendo utilizados (use com extrema moderação! :D):
+# docker volume prune
+Para que você possa montar o volume criado em algum container/service, basta executar o seguinte comando:
+# docker container run -d --mount type=volume,source=giropops,destination=/var/opa nginx
+Onde:
+--mount -- Comando utilizado para montar volumes.
+type=volume -- Indica que o tipo é "volume". Ainda existe o tipo "bind", onde, em vez de indicar um volume, você indicaria um diretório como source.
+source=giropops -- Qual o volume que pretendo montar.
+destination=/var/opa -- Onde no container montarei esse volume.
+Simples como voar, não?
+7.3. Localizando volumes
+Caso você queira obter a localização do seu volume, é simples. Mas para isso você precisa conhecer o comando "docker volume inspect".
+Com o "docker volume inspect" você consegue obter detalhes do seu container, como, por exemplo, detalhes do volume.
+A saída do comando "docker volume inspect" retorna mais informação do que somente o path do diretório no host. Vamos usar a opção "--format" ou "-f" para filtrar a saída do "inspect".
+docker volume inspect --format '{{ .Mountpoint }}' giropops
+/var/lib/docker/volumes/giropopos/_data
+======================================================================
+
+Subindo um conteiner nginx com volume
+docker run -d --name testando-volumes -v kenobi:/usr/share/nginx/html -p 8080:80 nginx
+Comando para apagar e matar o conteiner
+docker rm -f nomedele
+
+===================================================================
+Network em conteiner
+
+Subir os dois container para teste de rede
+
+docker run -it -p 5000:5000 obivas/giropops-senhas-ok:1.0
+docker run -d --name redis04 -p 6379:6379 obivas/redis:1.0
+
+Comando para criar um network
+docker network create -d mcvlan strigus
+Comando para inspesionar a network criada
+docker network inspect strigus
+Subir um container para usar a rede nova
+docker run -d --name redis --network strigus -p 6379:6379 redis
+
+Criamos uma rede e quando for subir o container adicionamos para qual rede ele vai participar, assim tds os container vão se comunicar pelos seus nomes se for necesários, nosso exemplos subimos dois containers, giropops-senha e redis.
+Subimos ambos com a informação de --network nome_da_rede, mas no container da aplicação adcionamos a  variavél ENV:redis, como ambos estão na mesma rede vão conseguir se comunicar.
+
+Também podemos fazer a conexão entre containers usando o comando --link, não é uma boa prática mas tb funciona
+docker run -d --name giropops-senhas --link redis:redis --env REDIS_HOST=redis -p 5000:5000 obivas/giropops-senha:1.1
+
+Usando o comando connect para conectar uma rede ao um container já em execução
+docker network connect strigus giropops-senhas
+
+========================================================================
+Limitando recurso ao subir um container
+docker run -d --name redis --network strigus -p 6379:6379 --cpu 0.5 --memory 64m redis
+ou
+docker run -d --name redis --network strigus -p 6379:6379 --cpu 0.5 --memory 64m --memory-swap 128m redis (limitando a memória swap lembrando que a swap precisa ser maior que a memory )
+===========================================================================
+Dockercompose
+
+Instalando o compose
+sudo apt  install docker-compose
+
+Subindo o primeiro docker compose
+Criar um arquivo docker-compose.yaml:
+
+version: '3'
+services:
+  nginx:
+    image: nginx
+    ports:
+      - "8080:80"
+
+Executar o mesmo:
+docker compose up
+
+Para o container do compose permanecer em execução usamos o -d
+docker compose up -d
+e para derrubar o mesmo usamos:
+docker compose down
+
+Agora vamos subir um docker-compose do giropos senhas mais o redis usando imagens já existentes
+Vamos criar o docker-compose.yaml:
+
+version: '3'
+services:
+  giropops-senha:
+    image: obivas/giropops-senhas-ok:1.0
+    ports:
+      - "5000:5000"
+    networks:
+      - obi
+    environment:
+      REDIS_HOST: redis
+  redis:
+    image: obivas/redis:1.0
+    ports:
+      - "6379:6379"
+    networks:
+      - obi
+
+networks:
+  obi:
+    driver: bridge
+
+Salve o arquivo e executar o docker
+docker compose up
+
+Agora criando volumes
+
+version: '3'
+services:
+  giropops-senha:
+    image: obivas/giropops-senhas-ok:1.0
+    ports:
+      - "5000:5000"
+    networks:
+      - obi
+    environment:
+      REDIS_HOST: redis
+    volumes:
+      - obivas:/obivas
+  redis:
+    image: obivas/redis:1.0
+    ports:
+      - "6379:6379"
+    networks:
+      - obi
+
+networks:
+  obi:
+    driver: bridge
+
+volumes:
+  obivas:
+
+Docker compose buildando uma imagem que esta dentro do ./DockerFIle
+
+version: '3'
+services:
+  giropops-senha:
+    build: ./Dockerfile
+    ports:
+      - "5000:5000"
+    networks:
+      - obi
+    environment:
+      REDIS_HOST: redis
+    volumes:
+      - obivas:/obivas
+  redis:
+    image: obivas/redis:1.0
+    ports:
+      - "6379:6379"
+    networks:
+      - obi
+
+networks:
+  obi:
+    driver: bridge
+
+volumes:
+  obivas:
+
+Criando vários container usando o composo (--scale )
+
+docker compose -f docker-compose.yaml up -d --scale giropops-senha=3
+OBS: cuidando com as portas
+
+Subindo container com o compose e limitando recursos e tb com dependência, o que vai subir primeiro.
+
+DockerFile
+version: '3'
+services:
+  giropops-senha:
+    build: ./Dockerfile
+    ports:
+      - "5000:5000"
+    networks:
+      - obi
+    environment:
+      REDIS_HOST: redis
+    volumes:
+      - obivas:/obivas
+    depends_on:
+      - redis
+         deploy:
+         resources:
+         reservations:
+         cpus: '0.25'
+         memory: 128M
+         limits:
+         cpus: '0.5'
+         memory: 256M
+
+  redis:
+    image: obivas/redis:1.0
+    networks:
+      - obi
+    volumes:
+      - obivas:/obivas
+
+networks:
+  obi:
+    driver: bridge
+
+volumes:
+  obivas:
+======================================
+Docker compose helphcheck
+
+version: '3.8'
+services:
+  giropops-senha:
+    build: ./Dockerfile
+    ports:
+      - "5000:5000"
+    networks:
+      - obi
+    environment:
+      REDIS_HOST: redis
+    volumes:
+      - obivas:/obivas
+    depends_on:
+      - redis
+        # deploy:
+        # resources:
+        # reservations:
+        # cpus: '0.25'
+        # memory: 128M
+        # limits:
+        # cpus: '0.5'
+        # memory: 256M
+
+  # healthcheck:
+      # test: ["CMD", "curl", "-f", "http://localhost:5000"]
+      # interval: 30s
+      # timeout: 5s
+      # retries: 3
+      # start_period: 10s
+  redis:
+    image: obivas/redis:1.0
+    ports:
+      - "6379:6379"
+        # command: redis-server --appendonly yes
+    networks:
+      - obi
+    volumes:
+      - obivas:/obivas
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 2s
+      retries: 3
+      start_period: 10s
+
+networks:
+  obi:
+    driver: bridge
+
+volumes:
+  obivas:
+========================================================
