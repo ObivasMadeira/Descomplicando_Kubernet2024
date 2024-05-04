@@ -306,3 +306,72 @@ networks:
 volumes:
   obivas:
 ========================================================
+Adicionando contexto no nosso composer
+
+version: '4.8'
+services:
+  giropops-senha:
+    build:
+      context: ./ Dockerfile
+      dockerfile: Dockerfile
+
+    ports:
+      - "5000:5000"
+
+    networks:
+      - obi
+
+    environment:
+      REDIS_HOST: redis
+        ## env_file:
+        ## - .env
+
+    volumes:
+      - type: volume
+        source: obivas
+        target: /obivas
+
+    depends_on:
+      - redis
+    deploy:
+      replicas: 4
+
+      labels:
+        io.obivas.description: "App de senhas"
+        io.obivas.version: "1.0"
+
+      update_config:
+        parallelism: 2
+        delay: 10s
+
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+
+
+  redis:
+    image: obivas/redis:1.0
+    ports:
+      - "6379:6379"
+        # command: redis-server --appendonly yes
+    networks:
+      - obi
+    volumes:
+      - obivas:/obivas
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 2s
+      retries: 3
+      start_period: 10s
+    labels:
+      io.obivas.description: "Redis Server"
+      io.obivas.version: "Latest"
+
+networks:
+  obi:
+    driver: bridge
+    ipam:
+-- INSERÇÃO --                                                                                                                                                                                                                                          1,1          Topo
+
