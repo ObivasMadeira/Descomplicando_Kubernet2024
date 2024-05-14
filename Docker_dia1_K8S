@@ -212,5 +212,75 @@ nodes:
   - role: worker
   - role: worker
 EOF
+===============================================
+Criando um pods de NGINX
+
+kubectl run obivas --image=nginx --port=80
+
+verificar se o pode foi criado
+
+kubectl get pods
+
+root@obi-System-Product-Name:/home/obi# k get pods
+NAME     READY   STATUS              RESTARTS   AGE
+obivas   0/1     ContainerCreating   0          7s
+root@obi-System-Product-Name:/home/obi# 
+
+acessar esse pod
+kubectl exec -it obivas -- bash
+
+Deletando o pods
+kubectl delete pods obivas
+
+O comando a seguir cria um objeto do k8s chamado de Service, que é utilizado justamente para expor pods para acesso externo.
+kubectl expose pod obivas
+
+root@obi-System-Product-Name:/home/obi# k get svc
+NAME         TYPE        CLUSTER-IP    EXTERNAL-IP   PORT(S)   AGE
+kubernetes   ClusterIP   10.96.0.1     <none>        443/TCP   4d22h
+obivas       ClusterIP   10.96.134.4   <none>        80/TCP    6s
+
+Agora vamos criar um no estilo NodePort
+kubectl expose pods obivas --type NodePort
+
+k get svc
+NAME         TYPE        CLUSTER-IP    EXTERNAL-IP   PORT(S)        AGE
+kubernetes   ClusterIP   10.96.0.1     <none>        443/TCP        4d22h
+obivas       NodePort    10.96.61.84   <none>        80:32094/TCP   3s  (Usando a porta alta)
+
+Usando comando dry-run para exportar o yml de uma aplicação, aqui usaremos a imagem do nginx
+
+kubectl run obivas --image=nginx --port=80 --dry-run=client -o yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: obivas
+  name: obivas
+spec:
+  containers:
+  - image: nginx
+    name: obivas
+    ports:
+    - containerPort: 80
+    resources: {}
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+status: {}
+
+Você tb pode mandar esse informação para um arquivo .yaml
+kubectl run obivas --image=nginx --port=80 --dry-run=client -o yaml > pod.yaml
+
+Subindo a aplicação com o arquivo criado
+kubectl apply -f pod.yaml
+
+
+
+
+
+
+
+
 
 
