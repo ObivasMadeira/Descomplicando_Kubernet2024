@@ -853,13 +853,7 @@ kubectl delete -f pod-template.yaml
 kubectl delete service nginx
 Liste novamente os recursos para ver se os mesmos ainda estão presentes.
 
+===================================
 
-
-
-
-
-
-
-
-
+Desafio 1 k8s
 
