@@ -1,0 +1,12 @@
+Dia vamos iniciar falando de pods, a menor unidade no k8s
+
+Comandos:
+
+Comando para pegar tds os pods em execução
+kubectl get pods -A
+
+Pega os podes de um determinado namespace, nesse caso usamos o kube-system
+kubectl get pods -n kube-system
+
+Comando para pegar mais informações sobre o pod.
+kubectl describe nomedopods
