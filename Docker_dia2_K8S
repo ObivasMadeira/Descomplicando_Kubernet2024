@@ -202,4 +202,44 @@ root         176       0  0 14:37 pts/1    00:00:00 bash
 root         186     176  0 14:37 pts/1    00:00:00 ps -ef
 root@obivas01:/#
 
+============================================================
+Vamos criar um pods para salvar dados, criar um ponto de volume, usamos o modelo emptydir, que não é o mais aconselhavével, uma vez q se vc matar o pod o volume é perdido junto com suas informações
+
+yaml
+
+apiVersion: v1
+kind: Pod
+metadata:
+   labels:
+     run: obivas01
+   name: obivas01
+spec:
+  containers:
+  - image: nginx
+    name: webserver
+    volumeMounts:
+    - mountPath: /volumeObivas
+      name: primeiro-emptydir
+    resources:
+      limits:
+        memory: "128Mi"
+        cpu: "1"
+      requests:
+        memory: "64Mi"
+        cpu: "0.5"
+
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+  volumes:
+  - name: primeiro-emptydir
+    emptyDir:
+      sizeLimit: 256Mi
+===================================================================
+
+
+
+
+
+
+
 
