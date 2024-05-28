@@ -350,3 +350,78 @@ spec:
             cpu: "300m"
             memory: 128Mi
 
+Agora vamos usar o retorno de versão anterior, se na hora de atualzar vc fez cagada, tipo atualizou em prd e era em sandbox, essas coisas, temos o comando.
+
+kubectl rollout undo deployment -n obivas nginx-deployment
+deployment.apps/nginx-deployment rolled back
+
+Para saber o que foi alterada 
+root@obi-System-Product-Name:~/k8s/day3# kubectl rollout history deployment -n obivas nginx-deployment
+deployment.apps/nginx-deployment
+REVISION  CHANGE-CAUSE
+6         <none>
+8         <none>
+9         <none>
+
+Para ver o que foi alterado nas últimas atualização
+
+kubectl rollout history deployment -n obivas nginx-deployment --revision 6
+deployment.apps/nginx-deployment with revision #6
+Pod Template:
+  Labels:	app=nginx-deployment
+	pod-template-hash=7b94797f99
+  Containers:
+   nginx:
+    Image:	nginx:1.15.0
+    Port:	<none>
+    Host Port:	<none>
+    Limits:
+      cpu:	500m
+      memory:	256Mi
+    Requests:
+      cpu:	300m
+      memory:	128Mi
+    Environment:	<none>
+    Mounts:	<none>
+  Volumes:	<none>
+  Node-Selectors:	<none>
+  Tolerations:	<none>
+
+root@obi-System-Product-Name:~/k8s/day3# kubectl rollout history deployment -n obivas nginx-deployment --revision 8
+deployment.apps/nginx-deployment with revision #8
+Pod Template:
+  Labels:	app=nginx-deployment
+	pod-template-hash=86cfc795fc
+  Containers:
+   nginx:
+    Image:	nginx:1.17.0
+    Port:	<none>
+    Host Port:	<none>
+    Limits:
+      cpu:	500m
+      memory:	256Mi
+    Requests:
+      cpu:	300m
+      memory:	128Mi
+    Environment:	<none>
+    Mounts:	<none>
+  Volumes:	<none>
+  Node-Selectors:	<none>
+  Tolerations:	<none>
+
+Voltar a uma versão especifica
+
+kubectl rollout history deployment -n obivas nginx-deployment
+deployment.apps/nginx-deployment
+REVISION  CHANGE-CAUSE
+11        <none>
+12        <none>
+13        <none>
+
+root@obi-System-Product-Name:~/k8s/day3# kubectl rollout undo deployment -n obivas nginx-deployment --to-revision=11
+deployment.apps/nginx-deployment rolled back
+root@obi-System-Product-Name:~/k8s/day3#
+
+kubectl rollout undo deployment -n obivas nginx-deployment --to-revision=6
+
+
