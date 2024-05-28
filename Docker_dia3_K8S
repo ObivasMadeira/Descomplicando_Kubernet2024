@@ -123,3 +123,230 @@ nginx-deployment-9bb44bfdb-w8rs2   1/1     Running   0          5m25s
 kubectl get replicasets (esse é o cara que é consultado para saber se esta ok com as replicas, replicasets)
 NAME                         DESIRED   CURRENT   READY   AGE
 nginx-deployment-9bb44bfdb   3         3         3       7m2s
+
+==================================================
+kubectl get deployment -o yaml
+
+Criar um deploymente via linha de comando
+
+kubectl create deployment --image nginx --replicas 2 nginx-deployment01
+
+root@obi-System-Product-Name:~/k8s/day3# kubectl get deployment
+NAME                 READY   UP-TO-DATE   AVAILABLE   AGE
+nginx-deployment01   2/2     2            2           8s
+root@obi-System-Product-Name:~/k8s/day3# kubectl get pods
+NAME                                  READY   STATUS    RESTARTS      AGE
+nginx-deployment01-77774f6685-2dtmq   1/1     Running   0             16s
+nginx-deployment01-77774f6685-khjb5   1/1     Running   0             16s
+obivas01                              1/1     Running   2 (15h ago)   4d23h (antigo)
+root@obi-System-Product-Name:~/k8s/day3#
+
+Comando para gerar o yaml do deployment
+
+kubectl create deployment --image nginx --replicas 2 nginx-deployment01 --dry-run=client -o yaml
+
+root@obi-System-Product-Name:~/k8s/day3# kubectl get po
+NAME                                  READY   STATUS    RESTARTS   AGE
+nginx-deployment01-77774f6685-dvtp9   1/1     Running   0          11s
+nginx-deployment01-77774f6685-vwfmp   1/1     Running   0          11s
+
+Acessar o pod do deployment
+kubectl exec -ti nginx-deployment01-77774f6685-dvtp9 -- bash
+
+Vamos criar um deploy com 10 replicas, com namespace e trocar a versão do nginx
+
+Primeiramento criamos a namespace
+
+kubectl create namespace obivas
+
+kubectl get namespace
+NAME                 STATUS   AGE
+default              Active   5d
+kube-node-lease      Active   5d
+kube-public          Active   5d
+kube-system          Active   5d
+local-path-storage   Active   5d
+obivas               Active   5m4s
+
+Ou tb podemos fazer via yaml
+kubectl create namespace obivas --dry-run=client -o yaml > namespaceobivas.yaml
+Esse foi o arquivo gerado
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  creationTimestamp: null
+  name: obivas
+spec: {}
+status: {}
+
+Agora criar o namespace utilizando o yaml
+
+kubectl apply -f namespaceobivas.yaml
+namespace/obivas created
+root@obi-System-Product-Name:~/k8s/day3# kubectl get namespace
+NAME                 STATUS   AGE
+default              Active   5d
+kube-node-lease      Active   5d
+kube-public          Active   5d
+kube-system          Active   5d
+local-path-storage   Active   5d
+obivas               Active   9s
+root@obi-System-Product-Name:~/k8s/day3#
+
+Após criar o namespace vamos subir o deploymento.
+root@obi-System-Product-Name:~/k8s/day3# kubectl apply -f deployment.yaml
+deployment.apps/nginx-deployment created
+
+Mas para consultar o novo deploymente o comando
+kubectl get deployment, não irá funcionar, pois criamos em outra namespace e não mais a default
+root@obi-System-Product-Name:~/k8s/day3# kubectl get deployment
+No resources found in default namespace.
+
+Temos que o usar o comando com o -n aonde quer dizer namespace e o nome dela
+root@obi-System-Product-Name:~/k8s/day3# kubectl get deployment -n obivas
+NAME               READY   UP-TO-DATE   AVAILABLE   AGE
+nginx-deployment   10/10   10           10          17s
+root@obi-System-Product-Name:~/k8s/day3#
+
+kubectl describe deployments.apps -n obivas nginx-deployment
+Name:                   nginx-deployment
+Namespace:              obivas
+CreationTimestamp:      Mon, 27 May 2024 21:04:57 -0300
+Labels:                 app=nginx-deployment
+Annotations:            deployment.kubernetes.io/revision: 2
+Selector:               app=nginx-deployment
+Replicas:               10 desired | 10 updated | 10 total | 10 available | 0 unavailable
+StrategyType:           RollingUpdate
+MinReadySeconds:        0
+RollingUpdateStrategy:  25% max unavailable, 25% max surge
+Pod Template:
+  Labels:  app=nginx-deployment
+  Containers:
+   nginx:
+    Image:      nginx:1.16.0
+    Port:       <none>
+    Host Port:  <none>
+    Limits:
+      cpu:     500m
+      memory:  256Mi
+    Requests:
+      cpu:         300m
+      memory:      128Mi
+    Environment:   <none>
+    Mounts:        <none>
+  Volumes:         <none>
+  Node-Selectors:  <none>
+  Tolerations:     <none>
+Conditions:
+  Type           Status  Reason
+  ----           ------  ------
+  Available      True    MinimumReplicasAvailable
+  Progressing    True    NewReplicaSetAvailable
+OldReplicaSets:  nginx-deployment-7b94797f99 (0/0 replicas created)
+NewReplicaSet:   nginx-deployment-55f57548b6 (10/10 replicas created)
+Events:
+  Type    Reason             Age                  From                   Message
+  ----    ------             ----                 ----                   -------
+  Normal  ScalingReplicaSet  5m54s                deployment-controller  Scaled up replica set nginx-deployment-7b94797f99 to 10
+  Normal  ScalingReplicaSet  2m17s                deployment-controller  Scaled up replica set nginx-deployment-55f57548b6 to 3
+  Normal  ScalingReplicaSet  2m17s                deployment-controller  Scaled down replica set nginx-deployment-7b94797f99 to 8
+  Normal  ScalingReplicaSet  2m16s                deployment-controller  Scaled up replica set nginx-deployment-55f57548b6 to 5
+  Normal  ScalingReplicaSet  2m9s                 deployment-controller  Scaled down replica set nginx-deployment-7b94797f99 to 7
+  Normal  ScalingReplicaSet  2m9s                 deployment-controller  Scaled up replica set nginx-deployment-55f57548b6 to 6
+  Normal  ScalingReplicaSet  2m8s                 deployment-controller  Scaled down replica set nginx-deployment-7b94797f99 to 6
+  Normal  ScalingReplicaSet  2m8s                 deployment-controller  Scaled up replica set nginx-deployment-55f57548b6 to 7
+  Normal  ScalingReplicaSet  2m7s                 deployment-controller  Scaled down replica set nginx-deployment-7b94797f99 to 5
+  Normal  ScalingReplicaSet  2m5s (x6 over 2m7s)  deployment-controller  (combined from similar events): Scaled down replica set nginx-deployment-7b94797f99 to 0
+
+COmando para pegar a versão do nginx rodando no pod
+kubectl exec -ti -n obivas nginx-deployment-55f57548b6-6ckdr -- nginx -v
+nginx version: nginx/1.16.0
+
+============================================
+Agora vamos ver sobre estrategias de deploymente
+
+Usaremos a default iniciamento para o entendimento
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: nginx-deployment
+  name: nginx-deployment
+  namespace: obivas
+spec:
+  replicas: 10
+  selector:
+    matchLabels:
+      app: nginx-deployment
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      MaxSurge: 1  ### Pode ter até 1 pod a mais do que eu pedi no arquivo - 11 pods
+      MaxUnavailable: 2  ### vai atualizar de 2 em 2
+  template:
+    metadata:
+      labels:
+        app: nginx-deployment
+    spec:
+      containers:
+      - image: nginx:1.16.0
+        name: nginx
+        resources:
+          limits:
+            cpu: "500m"
+            memory: 256Mi
+          requests:
+            cpu: "300m"
+            memory: 128Mi
+
+Após executar a criação do deployment usando essa estrategia nosso describe fica assim:
+
+kubectl describe deployments.apps -n obivas nginx-deployment
+Name:                   nginx-deployment
+Namespace:              obivas
+CreationTimestamp:      Mon, 27 May 2024 21:04:57 -0300
+Labels:                 app=nginx-deployment
+Annotations:            deployment.kubernetes.io/revision: 5
+Selector:               app=nginx-deployment
+Replicas:               10 desired | 10 updated | 10 total | 10 available | 0 unavailable
+StrategyType:           RollingUpdate
+MinReadySeconds:        0
+RollingUpdateStrategy:  1 max unavailable, 1 max surge
+
+Para após realizar alguma alteração no deploymente para acompanhar o status, usamos o comando
+kubectl rollout status deployment -n obivas nginx-deployment
+
+Usando outra estrategia mas menos indicada é a "recreat" essa ela mata td e sobe novamente
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: nginx-deployment
+  name: nginx-deployment
+  namespace: obivas
+spec:
+  replicas: 10
+  selector:
+    matchLabels:
+      app: nginx-deployment
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: nginx-deployment
+    spec:
+      containers:
+      - image: nginx:1.16.0
+        name: nginx
+        resources:
+          limits:
+            cpu: "500m"
+            memory: 256Mi
+          requests:
+            cpu: "300m"
+            memory: 128Mi
+
