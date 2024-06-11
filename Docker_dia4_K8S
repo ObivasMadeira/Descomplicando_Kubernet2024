@@ -1,0 +1,104 @@
+Inicio da aula do Day-4
+O que iremos ver hoje?
+Hoje é dia de falar sobre dois objetos muito importantes no Kubernetes, os ReplicaSets e os DaemonSets.
+Nós já sabemos o que é um Deployment e também já sabemos o que é um Pod no detalhe, então agora vamos conhecer essas duas figuras que estão super conectadas com o Deployment e com o Pod. Quando falamos sobre Deployment é impossível não falar sobre ReplicaSet, pois o Deployment é um objeto que cria um ReplicaSet e o ReplicaSet é um objeto que cria um Pod, veja que tudo está conectado.
+Já o nosso querido DaemonSet é um objeto que cria um Pod e esse Pod é um objeto que fica rodando em todos os nodes do cluster, super importante para nós, pois é com DaemonSet que nós conseguimos garantir que teremos pelo menos um Pod rodando em cada node do cluster. Por exemplo, imagine que você precisa de instalar os agente do Datadog ou ainda um exporter do Prometheus em todos os nodes do cluster, para isso você precisa de um DaemonSet.
+Ainda no dia de hoje, nós iremos aprender como garantir que os nossos Pods estão rodando corretamente, através das Probes do Kubernetes.
+Nós vamos falar sobre Readiness Probe, Liveness Probe e Startup Probe, e claro, mostrando todos os detalhes em exemplos práticos e super explicativos.
+Hoje é o dia de você aprender sobre esses dois objetos que são super importantes, e ainda, garantir que nós nunca colocaremos os nossos Pods em produção sem antes garantir que eles estão rodando corretamente e sendo checados pelas Probes do Kubernetes.
+Bora lá! #VAIIII
+===========================================
+
+ReplicaSets
+
+ReplicaSet
+Uma coisa é super importante de saber, quando estamos criando um Deployment no Kubernetes, automaticamente estamos criando além do Deployment um ReplicaSet e esse ReplicaSet é quem vai criar os Pods que estão dentro do Deployment.
+Confuso, não?
+Não, não é e vou te explicar.
+Quando criamos um Deployment, o Kubernetes cria um ReplicaSet para criar e fazer o gerenciamento das réplicas dos Pods em nosso cluster. Ele é o responsável por ficar observando os Pods e garantir o número de réplicas que nós definimos no Deployment.
+É possível criar um ReplicaSet sem um Deployment, mas não é uma boa prática, pois o ReplicaSet não tem a capacidade de fazer o gerenciamento de versões dos Pods e também não tem a capacidade de fazer o gerenciamento de RollingUpdate dos Pods.
+E olha que interessante, quando estamos fazendo a atualização de uma versão de um Pod com o Deployment, o Deployment cria um novo ReplicaSet para fazer o gerenciamento das réplicas dos Pods e quando a atualização termina, o Deployment remove as réplicas do ReplicaSet antigo e deixa apenas as réplicas do ReplicaSet novo.
+Mas ele não remove o ReplicaSet antigo, ele deixa ele lá, pois ele pode ser usado para fazer um Rollback da versão do Pod caso algo dê errado. Sim, quando precisamos fazer o Rollback de uma atualização em nossos Pods, o Deployment somente muda o ReplicaSet que está sendo usado para fazer o gerenciamento das réplicas dos Pods, passando a utilizar o ReplicaSet antigo.
+Vamos fazer isso na prática?
+Acho que vai te ajudar a entender melhor.
+
+
+Subimos um deployment com o seguinte ymal
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: nginx-deployment02
+  name: nginx-deployment02
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-deployment02
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: nginx-deployment02
+    spec:
+      containers:
+      - image: nginx:1.19.1
+        name: nginx
+        resources:
+          limits:
+            cpu: "0.5"
+            memory: 256Mi
+          requests:
+            cpu: "0.25"
+            memory: 128Mi
+
+Subiemos ele com o comando
+kubectl apply -f nginx-deployment.yaml
+
+Confirmamos sua criação:
+root@obi-System-Product-Name:~/k8s/day04# kubectl get deployment
+NAME                 READY   UP-TO-DATE   AVAILABLE   AGE
+nginx-deployment02   1/1     1            1           12m
+
+Confirmamos o pod
+kubectl get pods
+NAME                                  READY   STATUS    RESTARTS   AGE
+nginx-deployment02-6c4779d8dd-dvllq   1/1     Running   0          2m40s
+
+E tb verificamos o replicasets
+root@obi-System-Product-Name:~/k8s/day04# kubectl get rs
+NAME                            DESIRED   CURRENT   READY   AGE
+nginx-deployment02-6c4779d8dd   1         1         1       12m
+
+Depois disso alteramos o nosso yaml com uma outra versão do nginx e aplicamos novamente nosso deployment,
+como essa alteração foi criado outro replicaset e o anterior fico vazio
+root@obi-System-Product-Name:~/k8s/day04# kubectl get rs
+NAME                            DESIRED   CURRENT   READY   AGE
+nginx-deployment02-6c4779d8dd   1         1         1       12m
+nginx-deployment02-76d55c5f64   0         0         0       6m23s
+
+Depoois voltamos realizamos um rollout para versão anterior
+root@obi-System-Product-Name:~/k8s/day04# kubectl rollout undo deployment nginx-deployment02
+deployment.apps/nginx-deployment02 rolled back
+
+Criamos mais replicas do nosso pod com o comando:
+kubectl scale deployment nginx-deployment02 --replicas 3
+kubectl scale deployment nginx-deployment02 --replicas 3
+deployment.apps/nginx-deployment02 scaled
+root@obi-System-Product-Name:~/k8s/day04# kubectl get pods
+NAME                                  READY   STATUS              RESTARTS   AGE
+nginx-deployment02-6c4779d8dd-6c2bg   0/1     ContainerCreating   0          6s
+nginx-deployment02-6c4779d8dd-dvllq   1/1     Running             0          7m12s
+nginx-deployment02-6c4779d8dd-h9dkr   0/1     ContainerCreating   0          6s
+root@obi-System-Product-Name:~/k8s/day04# kubectl get pods
+NAME                                  READY   STATUS              RESTARTS   AGE
+nginx-deployment02-6c4779d8dd-6c2bg   1/1     Running             0          8s
+nginx-deployment02-6c4779d8dd-dvllq   1/1     Running             0          7m14s
+nginx-deployment02-6c4779d8dd-h9dkr   0/1     ContainerCreating   0          8s
+root@obi-System-Product-Name:~/k8s/day04# kubectl get pods
+NAME                                  READY   STATUS    RESTARTS   AGE
+nginx-deployment02-6c4779d8dd-6c2bg   1/1     Running   0          10s
+nginx-deployment02-6c4779d8dd-dvllq   1/1     Running   0          7m16s
+nginx-deployment02-6c4779d8dd-h9dkr   1/1     Running   0          10s
+root@obi-System-Product-Name:~/k8s/day04#
