@@ -102,3 +102,132 @@ nginx-deployment02-6c4779d8dd-6c2bg   1/1     Running   0          10s
 nginx-deployment02-6c4779d8dd-dvllq   1/1     Running   0          7m16s
 nginx-deployment02-6c4779d8dd-h9dkr   1/1     Running   0          10s
 root@obi-System-Product-Name:~/k8s/day04#
+
+========================================
+Criando uma replicaset
+
+vim nginx-replicaset.yaml
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  labels:
+    app: nginx-app
+  name: nginx-replicaset
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx-app
+  template:
+    metadata:
+      labels:
+        app: nginx-app
+    spec:
+      containers:
+      - name: nginx01
+        image: nginx:1.19.1
+        resources:
+          limits:
+            cpu: 0.5
+            memory: 256Mi
+          requests:
+            cpu: 0.3
+            memory: 128Mi
+
+kubectl aplly - f nginx-replicaset.yaml
+
+Verificar se foi criado:
+kubectl get rs
+NAME                            DESIRED   CURRENT   READY   AGE
+nginx-deployment02-6c4779d8dd   1         1         1       7d22h
+nginx-deployment02-76d55c5f64   0         0         0       7d22h
+nginx-replicaset                3         3         3       14s
+
+Realizamos um teste de alterar a versão do nginx para 19.1.2 e executamos o comando para atualizar o mesmo
+kubectl apply -f nginx-replicaset.yaml
+ele mostra que configurou, mas não atualizou a versão do pods.
+Para realizar a alteração foi necessário apagar o pod
+kubectl delete pods nginx-replicaset-nm8zz
+Após o delete o replicaset subiu um novo pods com a versão atualizada
+Normal  Pulling    30s   kubelet            Pulling image "nginx:1.19.2"
+
+Esse caso não é o indicado de se realizar, o correto é ter o deployment
+Para garantir o não usarmos mais esse cara vamos matar ele
+kubectl delete rs nginx-replicaset
+
+o resumo, replicaset é o cara resposavel por garantir as replicas ok e números ok, e tb responsavel por realizar o rollback
+de um versão se for necessário.
+=============================================
+
+O DaemonSet
+Já sabemos o que é um Pod, um Deployment e um ReplicaSet, mas agora é a hora de conhecermos mais um objeto do Kubernetes, o DaemonSet.
+O DaemonSet é um objeto que garante que todos os nós do cluster executem uma réplica de um Pod, ou seja, ele garante que todos os nós do cluster executem uma cópia de um Pod.
+O DaemonSet é muito útil para executar Pods que precisam ser executados em todos os nós do cluster, como por exemplo, um Pod que faz o monitoramento de logs, ou um Pod que faz o monitoramento de métricas.
+Alguns casos de uso de DaemonSets são:
+Execução de agentes de monitoramento, como o Prometheus Node Exporter ou o Fluentd.
+Execução de um proxy de rede em todos os nós do cluster, como kube-proxy, Weave Net, Calico ou Flannel.
+Execução de agentes de segurança em cada nó do cluster, como Falco ou Sysdig.
+Portanto, se nosso cluster possuir 3 nós, o DaemonSet vai garantir que todos os nós executem uma réplica do Pod que ele está gerenciando, ou seja, 3 réplicas do Pod.
+Caso adicionemos mais um node ao cluster, o DaemonSet vai garantir que todos os nós executem uma réplica do Pod que ele está gerenciando, ou seja, 4 réplicas do Pod.
+
+Criando o primeiro Daemonset via yaml
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  labels:
+    app: node-exporter-daemonset
+  name: node-exporter-daemonset
+spec:
+  selector:
+    matchLabels:
+      app: node-exporter-daemonset
+  template:
+    metadata:
+      labels:
+        app: node-exporter-daemonset
+    spec:
+      hostNetwork: true
+      containers:
+      - name: node-exporter
+        image: prom/node-exporter:latest
+        ports:
+        - containerPort: 9100
+          hostPort: 9100
+        volumeMounts:
+        - name: proc
+          mountPath: /host/proc
+          readOnly: true
+        - name: sys
+          mountPath: /host/sys
+          readOnly: true
+      volumes:
+      - name: proc
+        hostPath:
+          path: /proc
+      - name: sys
+        hostPath:
+          path: /sys
+Visualizando o daemonset criado
+kubectl get daemonst
+kubectl get daemonset
+NAME                      DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR   AGE
+node-exporter-daemonset   3         3         3       3            3           <none>          17s
+
+root@obi-System-Product-Name:~/k8s/day04# kubectl get pods
+NAME                                  READY   STATUS    RESTARTS       AGE
+nginx-deployment02-6c4779d8dd-dvllq   1/1     Running   10 (13h ago)   7d23h
+node-exporter-daemonset-bcr29         1/1     Running   0              3m23s
+node-exporter-daemonset-f4npm         1/1     Running   0              3m23s
+node-exporter-daemonset-t7wk2         1/1     Running   0              3m23s
+
+root@obi-System-Product-Name:~/k8s/day04# kubectl get nodes
+NAME                            STATUS   ROLES           AGE     VERSION
+kind-multinodes-control-plane   Ready    control-plane   7d23h   v1.24.0
+kind-multinodes-worker          Ready    <none>          7d23h   v1.24.0
+kind-multinodes-worker2         Ready    <none>          7d23h   v1.24.0
+kind-multinodes-worker3         Ready    <none>          7d23h   v1.24.0
+
+Se for necessário aumentar o número de node com o scale, automaticamente o daemonset cria um pod no node novo
+
+Esse cara pode ser usado para uma agente do data dog q faz o monitoramento do node
+
