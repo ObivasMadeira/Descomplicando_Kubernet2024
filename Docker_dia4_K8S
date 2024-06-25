@@ -231,3 +231,118 @@ Se for necessário aumentar o número de node com o scale, automaticamente o dae
 
 Esse cara pode ser usado para uma agente do data dog q faz o monitoramento do node
 
+=============================================
+
+Hj vamos falar de probes
+As Probes do Kubernetes
+Antes de seguir, eu queria trazer algo novo além dos dois novos objetos que você já aprendeu no dia de hoje. Eu queria que você saisse do dia de hoje com a segurança que você e capaz de criar um Pod, um Deployment, um ReplicaSet ou um DaemonSet, mas também com a segurança que você pode monitorar o seus suas aplicações que estão rodando dentro do cluster de maneira efetiva e utilizando recursos que o Kubernetes já nos disponibiliza.
+O que são as Probes?
+As probes são uma forma de você monitorar o seu Pod e saber se ele está em um estado saudável ou não. Com elas é possível assegurar que seus Pods estão rodando e respondendo de maneira correta, e mais do que isso, que o Kubernetes está testando o que está sendo executado dentro do seu Pod.
+Hoje nós temos disponíveis três tipos de probes, a livenessProbe, a readinessProbe e a startupProbe. Vamos ver no detalhe cada uma delas.
+
+Hj vamos usar o probe para garantir a integridade do nosso container dentro do pod, se ele esta vivo mesmo.
+Vamos criar nossa validação usando o yaml já existente e vamos somente add as informação do probe
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: nginx-deployment03
+  name: nginx-deployment03
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-deployment03
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: nginx-deployment03
+    spec:
+      containers:
+      - image: nginx:1.19.1
+        name: nginx
+        resources:
+          limits:
+            cpu: "0.5"
+            memory: 256Mi
+          requests:
+            cpu: "0.25"
+            memory: 128Mi
+        livenessProbe:
+          tcpSocket:
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+Adicionamos as informações usando a livenessProbe
+
+livenessProbe:
+          tcpSocket:
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+
+Vamos testar essa validação, trocamos a porta do nginx para 81, e mandamos configurar novamente.
+Após a validação esse foi o erro que detectamos no describe
+
+Events:
+  Type     Reason     Age                  From               Message
+  ----     ------     ----                 ----               -------
+  Normal   Scheduled  3m13s                default-scheduler  Successfully assigned default/nginx-deployment03-59c7ffd7df-t2qs4 to kind-multinodes-worker
+  Normal   Pulling    3m13s                kubelet            Pulling image "nginx:1.19.1"
+  Normal   Pulled     3m6s                 kubelet            Successfully pulled image "nginx:1.19.1" in 6.421516918s
+  Normal   Created    93s (x4 over 3m6s)   kubelet            Created container nginx
+  Normal   Started    93s (x4 over 3m6s)   kubelet            Started container nginx
+  Warning  Unhealthy  93s (x9 over 2m53s)  kubelet            Liveness probe failed: dial tcp 10.244.2.2:81: connect: connection refused
+  Normal   Killing    93s (x3 over 2m33s)  kubelet            Container nginx failed liveness probe, will be restarted
+  Normal   Pulled     93s (x3 over 2m33s)  kubelet            Container image "nginx:1.19.1" already present on machine
+
+Também podemos fazer via httpGet, conforme testado a baixo.
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: nginx-deployment03
+  name: nginx-deployment03
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-deployment03
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: nginx-deployment03
+    spec:
+      containers:
+      - image: nginx:1.19.1
+        name: nginx
+        resources:
+          limits:
+            cpu: "0.5"
+            memory: 256Mi
+          requests:
+            cpu: "0.25"
+            memory: 128Mi
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+
+Liveness Probe
+A livenessProbe é a nossa probe de verificação de integridade, o que ela faz é verificar se o que está rodando dentro do Pod está saudável. O que fazemos é criar uma forma de testar se o que temos dentro do Pod está respondendo conforme esperado. Se por acaso o teste falhar, o Pod será reiniciado.
+Para ficar mais claro, vamos mais uma vez utilizar o exemplo com o Nginx. Gosto de usar o Nginx como exemplo, pois sei que toda pessoa já o conhece, e assim, fica muito mais fácil de entender o que está acontecendo. Afinal, você está aqui para aprender Kubernetes, e se for com algo que você já conhece, fica muito mais fácil de entender.
+Bem, vamos lá, hora de criar um novo Deployment com o Nginx, vamos utilizar o exemplo que já utilizamos quando aprendemos sobre o Deployment.
+==========================
+
