@@ -346,3 +346,117 @@ Para ficar mais claro, vamos mais uma vez utilizar o exemplo com o Nginx. Gosto 
 Bem, vamos lá, hora de criar um novo Deployment com o Nginx, vamos utilizar o exemplo que já utilizamos quando aprendemos sobre o Deployment.
 ==========================
 
+Vamos falar agora de outra probe, agora vamos falar de readinessProbe, esse probe garante que o nosso container esta apto a receber conexões
+se ele falhar ele remove o container do loadbalancer por exemplo.
+
+YAML criado
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: nginx-deployment03
+  name: nginx-deployment03
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-deployment03
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: nginx-deployment03
+    spec:
+      containers:
+      - image: nginx:1.19.1
+        name: nginx
+        resources:
+          limits:
+            cpu: "0.5"
+            memory: 256Mi
+          requests:
+            cpu: "0.25"
+            memory: 128Mi
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+            - curl
+            - -f
+            - http://localhost:80/
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+
+Readiness Probe
+A readinessProbe é uma forma de o Kubernetes verificar se o seu container está pronto para receber tráfego, se ele está pronto para receber requisições vindas de fora.
+Essa é a nossa probe de leitura, ela fica verificando se o nosso container está pronto para receber requisições, e se estiver pronto, ele irá receber requisições, caso contrário, ele não irá receber requisições, pois será removido do endpoint do serviço, fazendo com que o tráfego não chegue até ele.
+Ainda iremos ver o que é service e endpoint, mas por enquanto, basta saber que o endpoint é o endereço que o nosso service irá usar para acessar o nosso Pod. Mas vamos ter um dia inteiro para falar sobre service e endpoint, então, relaxa.
+Voltando ao assunto, a nossa probe da vez irá garantir que o nosso Podestá saudável para receber requisições.
+
+==========================================
+Outra probe não menos importante é a startupProbe, ela monitora se o container iniciou corretamente no momento do star do container
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: nginx-deployment03
+  name: nginx-deployment03
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-deployment03
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: nginx-deployment03
+    spec:
+      containers:
+      - image: nginx:1.19.1
+        name: nginx
+        resources:
+          limits:
+            cpu: "0.5"
+            memory: 256Mi
+          requests:
+            cpu: "0.25"
+            memory: 128Mi
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+            - curl
+            - -f
+            - http://localhost:80/
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        startupProbe:
+          tcpSocket:
+            port: 80
+          initialDelaySeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 1
+
