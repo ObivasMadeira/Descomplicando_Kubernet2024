@@ -460,3 +460,9 @@ spec:
           timeoutSeconds: 5
           failureThreshold: 1
 
+Startup Probe
+Chegou a hora de falar sobre a probe, que na minha humilde opinião, é a menos utilizada, mas que é muito importante, a startupProbe.
+Ela é a responsável por verificar se o nosso container foi inicializado corretamente, e se ele está pronto para receber requisições.
+Ele é muito parecido com a readinessProbe, mas a diferença é que a startupProbe é executada apenas uma vez no começo da vida do nosso container, e a readinessProbe é executada de tempos em tempos.
+========================================================
+
