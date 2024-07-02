@@ -466,3 +466,208 @@ Ela é a responsável por verificar se o nosso container foi inicializado corret
 Ele é muito parecido com a readinessProbe, mas a diferença é que a startupProbe é executada apenas uma vez no começo da vida do nosso container, e a readinessProbe é executada de tempos em tempos.
 ========================================================
 
+Desafio do Jeff, criar 3 deployment com td que apredemos nesse dia.
+
+Comando para listar os pods de diferentes namespace
+kubectl get pods --all-namespaces | grep -E "NAMESPACE|obivas|obivas02|obivas03"
+
+Para esse desafio criamos 3 namespace via yaml
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  creationTimestamp: null
+  name: obivas
+spec: {}
+status: {}
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  creationTimestamp: null
+  name: obivas02
+spec: {}
+status: {}
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  creationTimestamp: null
+  name: obivas03
+spec: {}
+status: {}
+
+=====================================================
+1 deployment do nosso amigo nginx
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: nginx-deployment01
+  name: nginx-deployment01
+  namespace: obivas
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx-deployment01
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: nginx-deployment01
+    spec:
+      containers:
+      - image: nginx:1.16.0
+        name: nginx
+        resources:
+          limits:
+            cpu: "500m"
+            memory: 256Mi
+          requests:
+            cpu: "300m"
+            memory: 128Mi
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+
+Agora nosso amigo node-exporter
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: node-exporter-deployment02
+  name: node-exporter-deployment02
+  namespace: obivas02
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: node-exporter-deployment02
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        app: node-exporter-deployment02
+    spec:
+      hostNetwork: true
+      containers:
+      - name: node-exporter
+        image: prom/node-exporter:latest
+        resources:
+          limits:
+            cpu: "0.5"
+            memory: 256Mi
+          requests:
+            cpu: "0.25"
+            memory: 128Mi
+        ports:
+        - containerPort: 9100
+          hostPort: 9100
+        volumeMounts:
+        - name: proc
+          mountPath: /host/proc
+          readOnly: true
+        - name: sys
+          mountPath: /host/sys
+          readOnly: true
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 9100
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+      volumes:
+      - name: proc
+        hostPath:
+          path: /proc
+      - name: sys
+        hostPath:
+          path: /sys
+
+E por úlitmo e não menos importante Redis
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: redis-deployment
+  name: redis-deployment
+  namespace: obivas03
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: redis-deployment
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        app: redis-deployment
+    spec:
+      containers:
+      - name: redis
+        image: redis:latest
+        resources:
+          limits:
+            cpu: "0.5"
+            memory: 256Mi
+          requests:
+            cpu: "0.25"
+            memory: 128Mi
+        ports:
+        - containerPort: 6379
+        livenessProbe:
+          tcpSocket:
+            port: 6379
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+
+root@obi-System-Product-Name:~/k8s/day04# kubectl get namespaces
+NAME                 STATUS   AGE
+default              Active   74m
+kube-node-lease      Active   74m
+kube-public          Active   74m
+kube-system          Active   74m
+local-path-storage   Active   74m
+obivas               Active   73m
+obivas02             Active   38m
+obivas03             Active   7m7s
+root@obi-System-Product-Name:~/k8s/day04# kubectl get deployment --all-namespaces | grep -E "NAMESPACE|obivas|obivas02|obivas03"
+NAMESPACE            NAME                         READY   UP-TO-DATE   AVAILABLE   AGE
+obivas               nginx-deployment01           2/2     2            2           51m
+obivas02             node-exporter-deployment02   2/2     2            2           38m
+obivas03             redis-deployment             3/3     3            3           7m4s
+root@obi-System-Product-Name:~/k8s/day04# kubectl get pods --all-namespaces | grep -E "NAMESPACE|obivas|obivas02|obivas03"
+NAMESPACE            NAME                                                    READY   STATUS    RESTARTS   AGE
+obivas               nginx-deployment01-9bcff7486-q57gt                      1/1     Running   0          51m
+obivas               nginx-deployment01-9bcff7486-xv7nn                      1/1     Running   0          51m
+obivas02             node-exporter-deployment02-9889b966f-4mcvn              1/1     Running   0          17m
+obivas02             node-exporter-deployment02-9889b966f-n5lfp              1/1     Running   0          15m
+obivas03             redis-deployment-777998f8d-2sbr6                        1/1     Running   0          7m8s
+obivas03             redis-deployment-777998f8d-dscls                        1/1     Running   0          7m8s
+obivas03             redis-deployment-777998f8d-wzsh5                        1/1     Running   0          7m8s
+root@obi-System-Product-Name:~/k8s/day04#
