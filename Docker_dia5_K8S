@@ -252,3 +252,14 @@ Ver detalhes dos nodos criados:
 
 kubectl get nodes -o wide
 kubectl describe nodes k8s-controlplane
+---------------------------------------------------
+
+Comando importante para crear novo token e novo token-ca
+
+Você pode gerar um novo token se necessário:
+sudo kubeadm token create
+
+E então obtenha o discovery-token-ca-cert-hash novamente:
+openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | \
+    openssl rsa -pubin -outform der 2>/dev/null | \
+    openssl dgst -sha256 -hex | sed 's/^.* //'
