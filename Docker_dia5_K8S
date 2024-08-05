@@ -112,7 +112,9 @@ Inicializar a partir do nodo 1 do controlplane:
 
 # Init para iniciar, passar rede que vai ser usada e a interface de rede que o kubeadm vai usar para comunicar com demais nós
 sudo kubeadm init --pod-network-cidr=10.10.0.0/16 --apiserver-advertise-address=<O IP QUE VAI FALAR COM OS NODES>
-==========================================
+===================================================
+
+
 Depois de fazer todas as configurações e parametrizações necessárias vamos de fato iniciar nosso cluster k8s.
 Agora vamos escolher umas das instâncias ec2 para ser o control plane, nosso caso escohemos a máquina k8s-01.
 
@@ -215,6 +217,7 @@ kubeadm join: Adicionar um novo nó ao cluster. 172.31.57.89:6443: Endereço IP 
 Ver novos nodos. Perceber se estão com status Ready:
 
 kubectl get nodes
+========================================================================
 Instalando o Weave Net
 Instalar o plugin de rede que vai criar a rede de comunicação entre os pods. Por padrão, o k8s não resolve a rede automaticamente, por isso precisa ser instalado um plugin adicional.
 
@@ -231,6 +234,7 @@ Weave é outra solução popular de rede para Kubernetes.https://github.com/weav
 Cilium é um plugin de rede novo focado em segurança e desempenho. oferece recursos avançados, como balanceamento de carga, monitoramento e solução de problemas de rede. https://cilium.io/
 
 Kube-router é uma solução de rede leve para Kubernetes.
+========================================================================
 
 Nesse caso vamos testar com Weave Net. Executar somente no Control Plane:
 
