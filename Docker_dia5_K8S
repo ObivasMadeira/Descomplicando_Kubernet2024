@@ -374,3 +374,11 @@ Agora você já pode se divertir e utilizar o seu mais novo cluster Kubernetes!
 
 ===================================================================
 
+Seguindo...
+
+Pegar informações mais detalhadas do nosso cluster
+
+kubectl get pods -o wide
+
+kubectl describe nodes k8s-controlplane
+
