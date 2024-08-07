@@ -296,3 +296,48 @@ Events:            <none>
  
 
 Dessa forma estamos criando o PV utilizando o provisionador hostPath, que é um provisionador para ser utilizado em testes e desenvolvimento, já que os dados armazenados só estão disponíveis no node específico, por isso bora para mais um exemplo, mas agora utilizando o provisionador nfs, que é um sistema de arquivos de rede que permite compartilhar arquivos entre várias máquinas na rede.
+=============================================
+Vamos criar um volume de compatilhamento usando nfs
+criamos os seguintes diretório /mnt/nfs
+Depois adicionamos as configurações no arquivo exports (/etc/exports) o mesmo deve seguir esse modelo
+
+# /etc/exports: the access control list for filesystems which may be exported
+#               to NFS clients.  See exports(5).
+#
+# Example for NFSv2 and NFSv3:
+# /srv/homes       hostname1(rw,sync,no_subtree_check) hostname2(ro,sync,no_subtree_check)
+#
+# Example for NFSv4:
+# /srv/nfs4        gss/krb5i(rw,sync,fsid=0,crossmnt,no_subtree_check)
+# /srv/nfs4/homes  gss/krb5i(rw,sync,no_subtree_check)
+
+/mnt/nfs        *(rw,sync,no_root_squash,no_subtree_check)
+
+Adicionamos a linhas "/mnt/nfs        *(rw,sync,no_root_squash,no_subtree_check)" aonde o * fala que é tds podemos acessar esse volume, mas o correto seria uma range de ip.
+
+Criamos um pv-nfs.yaml para subir o novo pv
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: obi-pv-nfs
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  nfs:
+    server: 172.31.88.182
+    path: "/mnt/nfs"
+  storageClassName: standard
+
+kubectl apply -f pv-nfs.yaml
+
+kubectl get pv
+NAME         CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM   STORAGECLASS   REASON   AGE
+obi-pv       1Gi        RWO            Retain           Available           standard                22h
+obi-pv-nfs   1Gi        RWO            Retain           Available           standard                13s
+=====================================================
+
+
+
