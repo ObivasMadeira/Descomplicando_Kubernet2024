@@ -177,6 +177,87 @@ curl nginx-0.nginx.default.svc.cluster.local (Nome do pod, nome do serviço, nam
 root@nginx-1:/# curl nginx-0.nginx.default.svc.cluster.local
 giro-0
 
+=================================================================
+Hj vamos falar de sevices.
+
+Services
+Os Services no Kubernetes são uma abstração que define um conjunto lógico de Pods e uma política para acessá-los. Eles permitem que você exponha uma ou mais Pods para serem acessados por outros Pods, independentemente de onde eles estejam em execução no cluster.
+Os Services são definidos usando a API do Kubernetes, normalmente através de um arquivo de manifesto YAML.
+Tipos de Services
+Existem quatro tipos principais de Services:
+
+ClusterIP (padrão): Expõe o Service em um IP interno no cluster. Este tipo torna o Service acessível apenas dentro do cluster.
+NodePort: Expõe o Service na mesma porta de cada Node selecionado no cluster usando NAT. Torna o Service acessível de fora do cluster usando :.
+LoadBalancer: Cria um balanceador de carga externo no ambiente de nuvem atual (se suportado) e atribui um IP fixo, externo ao cluster, ao Service.
+ExternalName: Mapeia o Service para o conteúdo do campo externalName (por exemplo, foo.bar.example.com), retornando um registro CNAME com seu valor.
+
+Como os Services funcionam
+Os Services no Kubernetes fornecem uma abstração que define um conjunto lógico de Pods e uma política para acessá-los. Os conjuntos de Pods são determinados por meio de seletores de rótulo (Label Selectors). Embora cada Pod tenha um endereço IP único, esses IPs não são expostos fora do cluster sem um serviço.
+Sempre é bom reforçar a importância dos Labels no Kubernetes, pois eles são a base para a maioria das operações no Kubernetes, então cuide com carinho dos seus Labels.
+Os Services e os Endpoints
+Como eu já disse, os Services no Kubernetes representam um conjunto estável de Pods que fornecem determinada funcionalidade. A principal característica dos Services é que eles mantêm um endereço IP estável e uma porta de serviço que permanecem constantes ao longo do tempo, mesmo que os Pods subjacentes sejam substituídos.
+Para implementar essa abstração, o Kubernetes usa uma outra abstração chamada Endpoint. Quando um Service é criado, o Kubernetes também cria um objeto Endpoint com o mesmo nome. Esse objeto Endpoint rastreia os IPs e as portas dos Pods que correspondem aos critérios de seleção do Service.
+Por exemplo, quando você cria um Service automaticamente é criado os EndPoints que representam os Pods que estão sendo expostos pelo Service.
+
+
+Vamos começar.
+
+Vamos criar um deploymento simples
+kubectl create deployment nginx --image nginx --port 80
+
+root@obi-System-Product-Name:~/k8s/day06# kubectl expose deployment nginx
+service/nginx exposed
+root@obi-System-Product-Name:~/k8s/day06# kubectl get svc
+NAME         TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)   AGE
+kubernetes   ClusterIP   10.96.0.1       <none>        443/TCP   19m
+nginx        ClusterIP   10.96.151.144   <none>        80/TCP    8s
+root@obi-System-Product-Name:~/k8s/day06#
+
+Vamos testar
+kubectl run -it --rm debug --image busybox --restart Never -- sh
+Dentro do buysbox vamos testar
+/ # wget -O- 10.96.151.144
+Connecting to 10.96.151.144 (10.96.151.144:80)
+writing to stdout
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+<style>
+html { color-scheme: light dark; }
+body { width: 35em; margin: 0 auto;
+font-family: Tahoma, Verdana, Arial, sans-serif; }
+</style>
+</head>
+<body>
+<h1>Welcome to nginx!</h1>
+<p>If you see this page, the nginx web server is successfully installed and
+working. Further configuration is required.</p>
+
+<p>For online documentation and support please refer to
+<a href="http://nginx.org/">nginx.org</a>.<br/>
+Commercial support is available at
+<a href="http://nginx.com/">nginx.com</a>.</p>
+
+<p><em>Thank you for using nginx.</em></p>
+</body>
+</html>
+-                    100% |****************************************************************|   615  0:00:00 ETA
+written to stdout
+/ #
+
+Após esse teste vamos deletar o service criado
+kubeclt delete svc nignx
+
+Agora vamos criar um service no modo NodePort
+root@obi-System-Product-Name:~/k8s/day06# kubectl expose deployment nginx --type NodePort
+service/nginx exposed
+root@obi-System-Product-Name:~/k8s/day06# kubectl get svc
+NAME         TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)        AGE
+kubernetes   ClusterIP   10.96.0.1      <none>        443/TCP        25m
+nginx        NodePort    10.96.157.86   <none>        80:30023/TCP   6s
+root@obi-System-Product-Name:~/k8s/day06#
+
 
 
 
