@@ -170,9 +170,47 @@ KUBERNETES_PORT_443_TCP_ADDR=10.96.0.1
 TERM=xterm
 HOME=/root
 ===================
-13/02/2025
+5/05/2025
+
+Vamos la, usar as secrets do docker hub para subir um pod e usar a imagem do dockerhub
+
+Primeiro vamos criar o secret usando os config.json no diretório ./docker pegar esse arquivo e transformar em base 64
+
+base64 ~/.docker/config.json
+Vai ser gerado o valor EX: "QXF1aSB0ZW0gcXVlIGVzdGFyIG8gY29udGXDumRvIGRvIHNldSBjb25maWcuanNvbiwgY29pc2EgbGluZGEgZG8gSmVmaW0="
+
+ Crie um arquivo chamado dockerhub-secret.yaml com o seguinte conteúdo:
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: docker-hub-secret # nome do Secret
+type: kubernetes.io/dockerconfigjson # tipo do Secret, neste caso é um Secret que armazena credenciais Docker
+data:
+  .dockerconfigjson: |  # substitua este valor pelo conteúdo do seu arquivo config.json codificado em base64
+    QXF1aSB0ZW0gcXVlIGVzdGFyIG8gY29udGXDumRvIGRvIHNldSBjb25maWcuanNvbiwgY29pc2EgbGluZGEgZG8gSmVmaW0=
 
 
+Agora vamos criar o secret usando o kubectl
 
+kubectl apply -f dockerhub-secret.yaml
+secret/docker-hub-secret created
 
+Agora vamos testar nosso acesso e o pull da imagem do dockerhub
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: meu-pod
+spec:
+  containers:
+  - name: meu-container
+    image: minha-imagem-privada
+  imagePullSecrets: # campo que define o Secret que armazena as credenciais do Docker Hub
+  - name: docker-hub-secret # nome do Secret
+
+OBS:
+
+Um coisa importante, sempre quando você precisar criar um Pod que precise utilizar uma imagem Docker privada do Docker Hub, você precisa configurar o Pod para usar o Secret que armazena as credenciais do Docker Hub, e para isso você precisa usar o campo spec.imagePullSecrets no arquivo YAML do Pod.
+Perceba a utilização do campo spec.imagePullSecrets no arquivo YAML do Pod, e o campo name que define o nome do Secret que armazena as credenciais do Docker Hub. É somente isso que você precisa fazer para que o Kubernetes possa acessar o Docker Hub.
 
