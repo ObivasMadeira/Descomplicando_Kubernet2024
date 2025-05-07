@@ -1,3 +1,273 @@
 O que é o kube-prometheus?
 
 O kube-prometheus é um conjunto de manifestos do Kubernetes que nos permite ter o Prometheus Operator, Grafana, AlertManager, Node Exporter, Kube-State-Metrics, Prometheus-Adapter instalados e configurados de forma tranquila e com alta disponibilidade. Além disso, ele nos permite ter uma visão completa do nosso cluster de Kubernetes. Ele nos permite monitorar todos os componentes do nosso cluster de Kubernetes, como por exemplo: kube-scheduler, kube-controller-manager, kubelet, kube-proxy, etc.
+
+===============================================================
+Vamos criar nosso primeiro EKS.
+
+eksctl create cluster --name=eks-cluster-ouri --version=1.28 --region=us-east-1 --nodegroup-name=eks-cluster-ouri-nodegroup --node-type=t3.medium --nodes=2 --nodes-min=1 --nodes-max=3 --managed
+2025-05-06 23:03:11 [ℹ]  eksctl version 0.207.0
+2025-05-06 23:03:11 [ℹ]  using region us-east-1
+2025-05-06 23:03:12 [ℹ]  setting availability zones to [us-east-1f us-east-1a]
+2025-05-06 23:03:12 [ℹ]  subnets for us-east-1f - public:192.168.0.0/19 private:192.168.64.0/19
+2025-05-06 23:03:12 [ℹ]  subnets for us-east-1a - public:192.168.32.0/19 private:192.168.96.0/19
+2025-05-06 23:03:12 [ℹ]  nodegroup "eks-cluster-ouri-nodegroup" will use "" [AmazonLinux2/1.28]
+2025-05-06 23:03:12 [ℹ]  using Kubernetes version 1.28
+2025-05-06 23:03:12 [ℹ]  creating EKS cluster "eks-cluster-ouri" in "us-east-1" region with managed nodes
+2025-05-06 23:03:12 [ℹ]  will create 2 separate CloudFormation stacks for cluster itself and the initial managed nodegroup
+2025-05-06 23:03:12 [ℹ]  if you encounter any issues, check CloudFormation console or try 'eksctl utils describe-stacks --region=us-east-1 --cluster=eks-cluster-ouri'
+2025-05-06 23:03:12 [ℹ]  Kubernetes API endpoint access will use default of {publicAccess=true, privateAccess=false} for cluster "eks-cluster-ouri" in "us-east-1"
+2025-05-06 23:03:12 [ℹ]  CloudWatch logging will not be enabled for cluster "eks-cluster-ouri" in "us-east-1"
+2025-05-06 23:03:12 [ℹ]  you can enable it with 'eksctl utils update-cluster-logging --enable-types={SPECIFY-YOUR-LOG-TYPES-HERE (e.g. all)} --region=us-east-1 --cluster=eks-cluster-ouri'
+2025-05-06 23:03:12 [ℹ]  default addons metrics-server, vpc-cni, kube-proxy, coredns were not specified, will install them as EKS addons
+2025-05-06 23:03:12 [ℹ]  
+2 sequential tasks: { create cluster control plane "eks-cluster-ouri", 
+    2 sequential sub-tasks: { 
+        2 sequential sub-tasks: { 
+            1 task: { create addons },
+            wait for control plane to become ready,
+        },
+        create managed nodegroup "eks-cluster-ouri-nodegroup",
+    } 
+}
+2025-05-06 23:03:12 [ℹ]  building cluster stack "eksctl-eks-cluster-ouri-cluster"
+2025-05-06 23:03:13 [ℹ]  deploying stack "eksctl-eks-cluster-ouri-cluster"
+2025-05-06 23:03:43 [ℹ]  waiting for CloudFormation stack "eksctl-eks-cluster-ouri-cluster"
+2025-05-06 23:04:14 [ℹ]  waiting for CloudFormation stack "eksctl-eks-cluster-ouri-cluster"
+2025-05-06 23:05:15 [ℹ]  waiting for CloudFormation stack "eksctl-eks-cluster-ouri-cluster"
+2025-05-06 23:06:15 [ℹ]  waiting for CloudFormation stack "eksctl-eks-cluster-ouri-cluster"
+2025-05-06 23:07:16 [ℹ]  waiting for CloudFormation stack "eksctl-eks-cluster-ouri-cluster"
+2025-05-06 23:08:17 [ℹ]  waiting for CloudFormation stack "eksctl-eks-cluster-ouri-cluster"
+2025-05-06 23:09:17 [ℹ]  waiting for CloudFormation stack "eksctl-eks-cluster-ouri-cluster"
+2025-05-06 23:10:18 [ℹ]  waiting for CloudFormation stack "eksctl-eks-cluster-ouri-cluster"
+2025-05-06 23:11:19 [ℹ]  waiting for CloudFormation stack "eksctl-eks-cluster-ouri-cluster"
+2025-05-06 23:11:22 [ℹ]  creating addon: metrics-server
+2025-05-06 23:11:23 [ℹ]  successfully created addon: metrics-server
+2025-05-06 23:11:24 [!]  recommended policies were found for "vpc-cni" addon, but since OIDC is disabled on the cluster, eksctl cannot configure the requested permissions; the recommended way to provide IAM permissions for "vpc-cni" addon is via pod identity associations; after addon creation is completed, add all recommended policies to the config file, under `addon.PodIdentityAssociations`, and run `eksctl update addon`
+2025-05-06 23:11:24 [ℹ]  creating addon: vpc-cni
+2025-05-06 23:11:24 [ℹ]  successfully created addon: vpc-cni
+2025-05-06 23:11:25 [ℹ]  creating addon: kube-proxy
+2025-05-06 23:11:26 [ℹ]  successfully created addon: kube-proxy
+2025-05-06 23:11:26 [ℹ]  creating addon: coredns
+2025-05-06 23:11:27 [ℹ]  successfully created addon: coredns
+2025-05-06 23:13:30 [ℹ]  building managed nodegroup stack "eksctl-eks-cluster-ouri-nodegroup-eks-cluster-ouri-nodegroup"
+2025-05-06 23:13:31 [ℹ]  deploying stack "eksctl-eks-cluster-ouri-nodegroup-eks-cluster-ouri-nodegroup"
+2025-05-06 23:13:31 [ℹ]  waiting for CloudFormation stack "eksctl-eks-cluster-ouri-nodegroup-eks-cluster-ouri-nodegroup"
+2025-05-06 23:14:02 [ℹ]  waiting for CloudFormation stack "eksctl-eks-cluster-ouri-nodegroup-eks-cluster-ouri-nodegroup"
+2025-05-06 23:14:39 [ℹ]  waiting for CloudFormation stack "eksctl-eks-cluster-ouri-nodegroup-eks-cluster-ouri-nodegroup"
+2025-05-06 23:15:19 [ℹ]  waiting for CloudFormation stack "eksctl-eks-cluster-ouri-nodegroup-eks-cluster-ouri-nodegroup"
+2025-05-06 23:16:35 [ℹ]  waiting for CloudFormation stack "eksctl-eks-cluster-ouri-nodegroup-eks-cluster-ouri-nodegroup"
+2025-05-06 23:16:35 [ℹ]  waiting for the control plane to become ready
+2025-05-06 23:16:36 [✔]  saved kubeconfig as "/home/lucas_madeira/.kube/config"
+2025-05-06 23:16:36 [ℹ]  no tasks
+2025-05-06 23:16:36 [✔]  all EKS cluster resources for "eks-cluster-ouri" have been created
+2025-05-06 23:16:36 [ℹ]  nodegroup "eks-cluster-ouri-nodegroup" has 2 node(s)
+2025-05-06 23:16:36 [ℹ]  node "ip-192-168-3-107.ec2.internal" is ready
+2025-05-06 23:16:36 [ℹ]  node "ip-192-168-57-198.ec2.internal" is ready
+2025-05-06 23:16:36 [ℹ]  waiting for at least 1 node(s) to become ready in "eks-cluster-ouri-nodegroup"
+2025-05-06 23:16:36 [ℹ]  nodegroup "eks-cluster-ouri-nodegroup" has 2 node(s)
+2025-05-06 23:16:36 [ℹ]  node "ip-192-168-3-107.ec2.internal" is ready
+2025-05-06 23:16:36 [ℹ]  node "ip-192-168-57-198.ec2.internal" is ready
+2025-05-06 23:16:36 [✔]  created 1 managed nodegroup(s) in cluster "eks-cluster-ouri"
+2025-05-06 23:16:38 [ℹ]  kubectl command should work with "/home/lucas_madeira/.kube/config", try 'kubectl get nodes'
+2025-05-06 23:16:38 [✔]  EKS cluster "eks-cluster-ouri" in "us-east-1" region is ready
+
+==============================================
+
+Instalando o prometheus
+
+git clone https://github.com/prometheus-operator/kube-prometheus.git
+Cloning into 'kube-prometheus'...
+remote: Enumerating objects: 21135, done.
+remote: Counting objects: 100% (5721/5721), done.
+remote: Compressing objects: 100% (318/318), done.
+remote: Total 21135 (delta 5589), reused 5410 (delta 5400), pack-reused 15414 (from 3)
+Receiving objects: 100% (21135/21135), 13.51 MiB | 5.43 MiB/s, done.
+Resolving deltas: 100% (14690/14690), done.
+
+kubectl create -f manifests/setup
+customresourcedefinition.apiextensions.k8s.io/alertmanagerconfigs.monitoring.coreos.com created
+customresourcedefinition.apiextensions.k8s.io/alertmanagers.monitoring.coreos.com created
+customresourcedefinition.apiextensions.k8s.io/podmonitors.monitoring.coreos.com created
+customresourcedefinition.apiextensions.k8s.io/probes.monitoring.coreos.com created
+customresourcedefinition.apiextensions.k8s.io/prometheuses.monitoring.coreos.com created
+customresourcedefinition.apiextensions.k8s.io/prometheusagents.monitoring.coreos.com created
+customresourcedefinition.apiextensions.k8s.io/prometheusrules.monitoring.coreos.com created
+customresourcedefinition.apiextensions.k8s.io/scrapeconfigs.monitoring.coreos.com created
+customresourcedefinition.apiextensions.k8s.io/servicemonitors.monitoring.coreos.com created
+customresourcedefinition.apiextensions.k8s.io/thanosrulers.monitoring.coreos.com created
+namespace/monitoring created
+
+kubectl get namespace
+NAME              STATUS   AGE
+default           Active   32m
+kube-node-lease   Active   32m
+kube-public       Active   32m
+kube-system       Active   32m
+monitoring        Active   92s
+
+kubectl apply -f manifests
+alertmanager.monitoring.coreos.com/main created
+networkpolicy.networking.k8s.io/alertmanager-main created
+poddisruptionbudget.policy/alertmanager-main created
+prometheusrule.monitoring.coreos.com/alertmanager-main-rules created
+secret/alertmanager-main created
+service/alertmanager-main created
+serviceaccount/alertmanager-main created
+servicemonitor.monitoring.coreos.com/alertmanager-main created
+clusterrole.rbac.authorization.k8s.io/blackbox-exporter created
+clusterrolebinding.rbac.authorization.k8s.io/blackbox-exporter created
+configmap/blackbox-exporter-configuration created
+deployment.apps/blackbox-exporter created
+networkpolicy.networking.k8s.io/blackbox-exporter created
+service/blackbox-exporter created
+serviceaccount/blackbox-exporter created
+servicemonitor.monitoring.coreos.com/blackbox-exporter created
+secret/grafana-config created
+secret/grafana-datasources created
+configmap/grafana-dashboard-alertmanager-overview created
+configmap/grafana-dashboard-apiserver created
+configmap/grafana-dashboard-cluster-total created
+configmap/grafana-dashboard-controller-manager created
+configmap/grafana-dashboard-grafana-overview created
+configmap/grafana-dashboard-k8s-resources-cluster created
+configmap/grafana-dashboard-k8s-resources-multicluster created
+configmap/grafana-dashboard-k8s-resources-namespace created
+configmap/grafana-dashboard-k8s-resources-node created
+configmap/grafana-dashboard-k8s-resources-pod created
+configmap/grafana-dashboard-k8s-resources-windows-cluster created
+configmap/grafana-dashboard-k8s-resources-windows-namespace created
+configmap/grafana-dashboard-k8s-resources-windows-pod created
+configmap/grafana-dashboard-k8s-resources-workload created
+configmap/grafana-dashboard-k8s-resources-workloads-namespace created
+configmap/grafana-dashboard-k8s-windows-cluster-rsrc-use created
+configmap/grafana-dashboard-k8s-windows-node-rsrc-use created
+configmap/grafana-dashboard-kubelet created
+configmap/grafana-dashboard-namespace-by-pod created
+configmap/grafana-dashboard-namespace-by-workload created
+configmap/grafana-dashboard-node-cluster-rsrc-use created
+configmap/grafana-dashboard-node-rsrc-use created
+configmap/grafana-dashboard-nodes-aix created
+configmap/grafana-dashboard-nodes-darwin created
+configmap/grafana-dashboard-nodes created
+configmap/grafana-dashboard-persistentvolumesusage created
+configmap/grafana-dashboard-pod-total created
+configmap/grafana-dashboard-prometheus-remote-write created
+configmap/grafana-dashboard-prometheus created
+configmap/grafana-dashboard-proxy created
+configmap/grafana-dashboard-scheduler created
+configmap/grafana-dashboard-workload-total created
+configmap/grafana-dashboards created
+deployment.apps/grafana created
+networkpolicy.networking.k8s.io/grafana created
+prometheusrule.monitoring.coreos.com/grafana-rules created
+service/grafana created
+serviceaccount/grafana created
+servicemonitor.monitoring.coreos.com/grafana created
+prometheusrule.monitoring.coreos.com/kube-prometheus-rules created
+clusterrole.rbac.authorization.k8s.io/kube-state-metrics created
+clusterrolebinding.rbac.authorization.k8s.io/kube-state-metrics created
+deployment.apps/kube-state-metrics created
+networkpolicy.networking.k8s.io/kube-state-metrics created
+prometheusrule.monitoring.coreos.com/kube-state-metrics-rules created
+service/kube-state-metrics created
+serviceaccount/kube-state-metrics created
+servicemonitor.monitoring.coreos.com/kube-state-metrics created
+prometheusrule.monitoring.coreos.com/kubernetes-monitoring-rules created
+servicemonitor.monitoring.coreos.com/kube-apiserver created
+servicemonitor.monitoring.coreos.com/coredns created
+servicemonitor.monitoring.coreos.com/kube-controller-manager created
+servicemonitor.monitoring.coreos.com/kube-scheduler created
+servicemonitor.monitoring.coreos.com/kubelet created
+clusterrole.rbac.authorization.k8s.io/node-exporter created
+clusterrolebinding.rbac.authorization.k8s.io/node-exporter created
+daemonset.apps/node-exporter created
+networkpolicy.networking.k8s.io/node-exporter created
+prometheusrule.monitoring.coreos.com/node-exporter-rules created
+service/node-exporter created
+serviceaccount/node-exporter created
+servicemonitor.monitoring.coreos.com/node-exporter created
+clusterrole.rbac.authorization.k8s.io/prometheus-k8s created
+clusterrolebinding.rbac.authorization.k8s.io/prometheus-k8s created
+networkpolicy.networking.k8s.io/prometheus-k8s created
+poddisruptionbudget.policy/prometheus-k8s created
+prometheus.monitoring.coreos.com/k8s created
+prometheusrule.monitoring.coreos.com/prometheus-k8s-prometheus-rules created
+rolebinding.rbac.authorization.k8s.io/prometheus-k8s-config created
+rolebinding.rbac.authorization.k8s.io/prometheus-k8s created
+rolebinding.rbac.authorization.k8s.io/prometheus-k8s created
+rolebinding.rbac.authorization.k8s.io/prometheus-k8s created
+role.rbac.authorization.k8s.io/prometheus-k8s-config created
+role.rbac.authorization.k8s.io/prometheus-k8s created
+role.rbac.authorization.k8s.io/prometheus-k8s created
+role.rbac.authorization.k8s.io/prometheus-k8s created
+service/prometheus-k8s created
+serviceaccount/prometheus-k8s created
+servicemonitor.monitoring.coreos.com/prometheus-k8s created
+Warning: resource apiservices/v1beta1.metrics.k8s.io is missing the kubectl.kubernetes.io/last-applied-configuration annotation which is required by kubectl apply. kubectl apply should only be used on resources created declaratively by either kubectl create --save-config or kubectl apply. The missing annotation will be patched automatically.
+apiservice.apiregistration.k8s.io/v1beta1.metrics.k8s.io configured
+clusterrole.rbac.authorization.k8s.io/prometheus-adapter created
+clusterrole.rbac.authorization.k8s.io/system:aggregated-metrics-reader created
+clusterrolebinding.rbac.authorization.k8s.io/prometheus-adapter created
+clusterrolebinding.rbac.authorization.k8s.io/resource-metrics:system:auth-delegator created
+clusterrole.rbac.authorization.k8s.io/resource-metrics-server-resources created
+configmap/adapter-config created
+deployment.apps/prometheus-adapter created
+networkpolicy.networking.k8s.io/prometheus-adapter created
+poddisruptionbudget.policy/prometheus-adapter created
+rolebinding.rbac.authorization.k8s.io/resource-metrics-auth-reader created
+service/prometheus-adapter created
+serviceaccount/prometheus-adapter created
+servicemonitor.monitoring.coreos.com/prometheus-adapter created
+clusterrole.rbac.authorization.k8s.io/prometheus-operator created
+clusterrolebinding.rbac.authorization.k8s.io/prometheus-operator created
+deployment.apps/prometheus-operator created
+networkpolicy.networking.k8s.io/prometheus-operator created
+prometheusrule.monitoring.coreos.com/prometheus-operator-rules created
+service/prometheus-operator created
+serviceaccount/prometheus-operator created
+servicemonitor.monitoring.coreos.com/prometheus-operator created
+
+kubectl get pods -n monitoring
+NAME                                   READY   STATUS    RESTARTS   AGE
+alertmanager-main-0                    2/2     Running   0          30s
+alertmanager-main-1                    2/2     Running   0          30s
+alertmanager-main-2                    2/2     Running   0          30s
+blackbox-exporter-7f7b644956-47f5x     3/3     Running   0          88s
+grafana-745fd45b68-l2ht6               1/1     Running   0          65s
+kube-state-metrics-66d5985456-dszhq    3/3     Running   0          61s
+node-exporter-khk4z                    2/2     Running   0          54s
+node-exporter-x4v2x                    2/2     Running   0          54s
+prometheus-adapter-77f8587965-rbxtb    1/1     Running   0          40s
+prometheus-adapter-77f8587965-wqm9j    1/1     Running   0          40s
+prometheus-k8s-0                       2/2     Running   0          30s
+prometheus-k8s-1                       2/2     Running   0          30s
+prometheus-operator-65c5ff896f-7wfkg   2/2     Running   0          36s
+kubectl get svc -n monitoring
+NAME                    TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)                      AGE
+alertmanager-main       ClusterIP   10.100.169.117   <none>        9093/TCP,8080/TCP            114s
+alertmanager-operated   ClusterIP   None             <none>        9093/TCP,9094/TCP,9094/UDP   50s
+blackbox-exporter       ClusterIP   10.100.200.232   <none>        9115/TCP,19115/TCP           110s
+grafana                 ClusterIP   10.100.12.103    <none>        3000/TCP                     86s
+kube-state-metrics      ClusterIP   None             <none>        8443/TCP,9443/TCP            82s
+node-exporter           ClusterIP   None             <none>        9100/TCP                     76s
+prometheus-adapter      ClusterIP   10.100.58.24     <none>        443/TCP                      61s
+prometheus-k8s          ClusterIP   10.100.144.36    <none>        9090/TCP,8080/TCP            67s
+prometheus-operated     ClusterIP   None             <none>        9090/TCP                     50s
+prometheus-operator     ClusterIP   None             <none>        8443/TCP                     57s
+kubectl get servicemonitor -n monitoring
+NAME                      AGE
+alertmanager-main         2m
+blackbox-exporter         117s
+coredns                   88s
+grafana                   93s
+kube-apiserver            88s
+kube-controller-manager   87s
+kube-scheduler            87s
+kube-state-metrics        89s
+kubelet                   86s
+node-exporter             83s
+prometheus-adapter        68s
+prometheus-k8s            74s
+prometheus-operator       64s
+
