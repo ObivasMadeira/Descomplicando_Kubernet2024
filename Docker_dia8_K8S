@@ -215,3 +215,70 @@ Um coisa importante, sempre quando você precisar criar um Pod que precise utili
 Perceba a utilização do campo spec.imagePullSecrets no arquivo YAML do Pod, e o campo name que define o nome do Secret que armazena as credenciais do Docker Hub. É somente isso que você precisa fazer para que o Kubernetes possa acessar o Docker Hub.
 
 06/05
+
+Pod do ngnix
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-certificado
+  labels:
+    app: nginx
+spec:
+  containers:
+    - name: nginx-cert
+      image: nginx
+      ports:
+        - containerPort: 80
+        - containerPort: 443
+      volumeMounts:
+        - name: nginx-conf-volume
+          mountPath: /etc/nginx/nginx.conf
+          subPath: nginx.conf
+        - name: nginx-tls
+          mountPath: /etc/nginx/tls
+  volumes:
+    - name: nginx-conf-volume
+      configMap:
+        name: nginx.conf
+    - name: nginx-tls
+      secret:
+        secretName: meuservico-web-tls-secret
+        items:
+          - key: tls.crt
+            path: certificado.crt
+          - key: tls.key
+            path: chave-privada.key
+
+teste curl -h https://localhost:4443 ou no navagador https://localhost:4443
+
+kubectl port-forward services/nginx-certificado 4443:443
+Forwarding from 127.0.0.1:4443 -> 443
+
+configmap
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+  immutable: true # torna o ConfigMap imutável
+data:
+  nginx.conf: |
+    events { }
+
+    http {
+      server {
+        listen 80;
+        listen 443 ssl;
+
+        ssl_certificate /etc/nginx/tls/certificado.crt;
+        ssl_certificate_key /etc/nginx/tls/chave-privada.key;
+
+        location / {
+          return 200 'Bem-vindo ao Nginx!\n';
+          add_header Content-Type text/plain;
+        }
+      }
+    }
+
+
