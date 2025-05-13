@@ -271,3 +271,291 @@ prometheus-adapter        68s
 prometheus-k8s            74s
 prometheus-operator       64s
 
+==================================
+Comando importantes
+
+kubectl config get-contexts
+
+kubectl config get-contexts
+CURRENT   NAME                                                    CLUSTER                                AUTHINFO                                                NAMESPACE
+*         iam-root-account@eks-cluster-ouri.us-east-1.eksctl.io   eks-cluster-ouri.us-east-1.eksctl.io   iam-root-account@eks-cluster-ouri.us-east-1.eksctl.io   
+          kind-kind                                               kind-kind                              kind-kind                                               
+
+kubectl config use-context kind-kind
+Switched to context "kind-kind".
+
+======================================
+INstalando kubeprometheus
+
+Primeiro clonamos o repo do projeto
+
+git clone https://github.com/prometheus-operator/kube-prometheus.git
+Cloning into 'kube-prometheus'...
+remote: Enumerating objects: 21148, done.
+remote: Counting objects: 100% (5334/5334), done.
+remote: Compressing objects: 100% (282/282), done.
+remote: Total 21148 (delta 5228), reused 5052 (delta 5052), pack-reused 15814 (from 4)
+Receiving objects: 100% (21148/21148), 13.54 MiB | 4.97 MiB/s, done.
+Resolving deltas: 100% (14696/14696), done.
+
+Após clonar executar o primeiro serviço
+
+kubectl create -f manifests/setup
+customresourcedefinition.apiextensions.k8s.io/alertmanagerconfigs.monitoring.coreos.com created
+customresourcedefinition.apiextensions.k8s.io/alertmanagers.monitoring.coreos.com created
+customresourcedefinition.apiextensions.k8s.io/podmonitors.monitoring.coreos.com created
+customresourcedefinition.apiextensions.k8s.io/probes.monitoring.coreos.com created
+customresourcedefinition.apiextensions.k8s.io/prometheuses.monitoring.coreos.com created
+customresourcedefinition.apiextensions.k8s.io/prometheusagents.monitoring.coreos.com created
+customresourcedefinition.apiextensions.k8s.io/prometheusrules.monitoring.coreos.com created
+customresourcedefinition.apiextensions.k8s.io/scrapeconfigs.monitoring.coreos.com created
+customresourcedefinition.apiextensions.k8s.io/servicemonitors.monitoring.coreos.com created
+customresourcedefinition.apiextensions.k8s.io/thanosrulers.monitoring.coreos.com created
+namespace/monitoring created
+
+Depois o seguinte:
+
+kubectl apply -f manifests
+alertmanager.monitoring.coreos.com/main created
+networkpolicy.networking.k8s.io/alertmanager-main created
+poddisruptionbudget.policy/alertmanager-main created
+prometheusrule.monitoring.coreos.com/alertmanager-main-rules created
+secret/alertmanager-main created
+service/alertmanager-main created
+serviceaccount/alertmanager-main created
+servicemonitor.monitoring.coreos.com/alertmanager-main created
+clusterrole.rbac.authorization.k8s.io/blackbox-exporter created
+clusterrolebinding.rbac.authorization.k8s.io/blackbox-exporter created
+configmap/blackbox-exporter-configuration created
+deployment.apps/blackbox-exporter created
+networkpolicy.networking.k8s.io/blackbox-exporter created
+service/blackbox-exporter created
+serviceaccount/blackbox-exporter created
+servicemonitor.monitoring.coreos.com/blackbox-exporter created
+secret/grafana-config created
+secret/grafana-datasources created
+configmap/grafana-dashboard-alertmanager-overview created
+configmap/grafana-dashboard-apiserver created
+configmap/grafana-dashboard-cluster-total created
+configmap/grafana-dashboard-controller-manager created
+configmap/grafana-dashboard-grafana-overview created
+configmap/grafana-dashboard-k8s-resources-cluster created
+configmap/grafana-dashboard-k8s-resources-multicluster created
+configmap/grafana-dashboard-k8s-resources-namespace created
+configmap/grafana-dashboard-k8s-resources-node created
+configmap/grafana-dashboard-k8s-resources-pod created
+configmap/grafana-dashboard-k8s-resources-windows-cluster created
+configmap/grafana-dashboard-k8s-resources-windows-namespace created
+configmap/grafana-dashboard-k8s-resources-windows-pod created
+configmap/grafana-dashboard-k8s-resources-workload created
+configmap/grafana-dashboard-k8s-resources-workloads-namespace created
+configmap/grafana-dashboard-k8s-windows-cluster-rsrc-use created
+configmap/grafana-dashboard-k8s-windows-node-rsrc-use created
+configmap/grafana-dashboard-kubelet created
+configmap/grafana-dashboard-namespace-by-pod created
+configmap/grafana-dashboard-namespace-by-workload created
+configmap/grafana-dashboard-node-cluster-rsrc-use created
+configmap/grafana-dashboard-node-rsrc-use created
+configmap/grafana-dashboard-nodes-aix created
+configmap/grafana-dashboard-nodes-darwin created
+configmap/grafana-dashboard-nodes created
+configmap/grafana-dashboard-persistentvolumesusage created
+configmap/grafana-dashboard-pod-total created
+configmap/grafana-dashboard-prometheus-remote-write created
+configmap/grafana-dashboard-prometheus created
+configmap/grafana-dashboard-proxy created
+configmap/grafana-dashboard-scheduler created
+configmap/grafana-dashboard-workload-total created
+configmap/grafana-dashboards created
+deployment.apps/grafana created
+networkpolicy.networking.k8s.io/grafana created
+prometheusrule.monitoring.coreos.com/grafana-rules created
+service/grafana created
+serviceaccount/grafana created
+servicemonitor.monitoring.coreos.com/grafana created
+prometheusrule.monitoring.coreos.com/kube-prometheus-rules created
+clusterrole.rbac.authorization.k8s.io/kube-state-metrics created
+clusterrolebinding.rbac.authorization.k8s.io/kube-state-metrics created
+deployment.apps/kube-state-metrics created
+networkpolicy.networking.k8s.io/kube-state-metrics created
+prometheusrule.monitoring.coreos.com/kube-state-metrics-rules created
+service/kube-state-metrics created
+serviceaccount/kube-state-metrics created
+servicemonitor.monitoring.coreos.com/kube-state-metrics created
+prometheusrule.monitoring.coreos.com/kubernetes-monitoring-rules created
+servicemonitor.monitoring.coreos.com/kube-apiserver created
+servicemonitor.monitoring.coreos.com/coredns created
+servicemonitor.monitoring.coreos.com/kube-controller-manager created
+servicemonitor.monitoring.coreos.com/kube-scheduler created
+servicemonitor.monitoring.coreos.com/kubelet created
+clusterrole.rbac.authorization.k8s.io/node-exporter created
+clusterrolebinding.rbac.authorization.k8s.io/node-exporter created
+daemonset.apps/node-exporter created
+networkpolicy.networking.k8s.io/node-exporter created
+prometheusrule.monitoring.coreos.com/node-exporter-rules created
+service/node-exporter created
+serviceaccount/node-exporter created
+servicemonitor.monitoring.coreos.com/node-exporter created
+clusterrole.rbac.authorization.k8s.io/prometheus-k8s created
+clusterrolebinding.rbac.authorization.k8s.io/prometheus-k8s created
+networkpolicy.networking.k8s.io/prometheus-k8s created
+poddisruptionbudget.policy/prometheus-k8s created
+prometheus.monitoring.coreos.com/k8s created
+prometheusrule.monitoring.coreos.com/prometheus-k8s-prometheus-rules created
+rolebinding.rbac.authorization.k8s.io/prometheus-k8s-config created
+rolebinding.rbac.authorization.k8s.io/prometheus-k8s created
+rolebinding.rbac.authorization.k8s.io/prometheus-k8s created
+rolebinding.rbac.authorization.k8s.io/prometheus-k8s created
+role.rbac.authorization.k8s.io/prometheus-k8s-config created
+role.rbac.authorization.k8s.io/prometheus-k8s created
+role.rbac.authorization.k8s.io/prometheus-k8s created
+role.rbac.authorization.k8s.io/prometheus-k8s created
+service/prometheus-k8s created
+serviceaccount/prometheus-k8s created
+servicemonitor.monitoring.coreos.com/prometheus-k8s created
+apiservice.apiregistration.k8s.io/v1beta1.metrics.k8s.io created
+clusterrole.rbac.authorization.k8s.io/prometheus-adapter created
+clusterrole.rbac.authorization.k8s.io/system:aggregated-metrics-reader created
+clusterrolebinding.rbac.authorization.k8s.io/prometheus-adapter created
+clusterrolebinding.rbac.authorization.k8s.io/resource-metrics:system:auth-delegator created
+clusterrole.rbac.authorization.k8s.io/resource-metrics-server-resources created
+configmap/adapter-config created
+deployment.apps/prometheus-adapter created
+networkpolicy.networking.k8s.io/prometheus-adapter created
+poddisruptionbudget.policy/prometheus-adapter created
+rolebinding.rbac.authorization.k8s.io/resource-metrics-auth-reader created
+service/prometheus-adapter created
+serviceaccount/prometheus-adapter created
+servicemonitor.monitoring.coreos.com/prometheus-adapter created
+clusterrole.rbac.authorization.k8s.io/prometheus-operator created
+clusterrolebinding.rbac.authorization.k8s.io/prometheus-operator created
+deployment.apps/prometheus-operator created
+networkpolicy.networking.k8s.io/prometheus-operator created
+prometheusrule.monitoring.coreos.com/prometheus-operator-rules created
+service/prometheus-operator created
+serviceaccount/prometheus-operator created
+servicemonitor.monitoring.coreos.com/prometheus-operator created
+kubectl get pods -n monitoring
+NAME                                  READY   STATUS    RESTARTS   AGE
+alertmanager-main-0                   2/2     Running   0          4m27s
+alertmanager-main-1                   2/2     Running   0          4m27s
+alertmanager-main-2                   2/2     Running   0          4m27s
+blackbox-exporter-d4d45d65-97rsc      3/3     Running   0          5m11s
+grafana-68958fc7b9-prc7n              1/1     Running   0          5m11s
+kube-state-metrics-6d8b8c455-hr4xk    3/3     Running   0          5m10s
+node-exporter-2klvg                   2/2     Running   0          5m10s
+node-exporter-95wr5                   2/2     Running   0          5m10s
+node-exporter-wth72                   2/2     Running   0          5m10s
+node-exporter-zdbb9                   2/2     Running   0          5m10s
+prometheus-adapter-784f566c54-bt822   1/1     Running   0          5m9s
+prometheus-adapter-784f566c54-z6j6t   1/1     Running   0          5m9s
+prometheus-k8s-0                      2/2     Running   0          4m27s
+prometheus-k8s-1                      2/2     Running   0          4m26s
+prometheus-operator-7cd6d5b6b-xvwm8   2/2     Running   0          5m9s
+kubectl get svc -n monitoring
+NAME                    TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)                      AGE
+alertmanager-main       ClusterIP   10.96.227.212   <none>        9093/TCP,8080/TCP            5m17s
+alertmanager-operated   ClusterIP   None            <none>        9093/TCP,9094/TCP,9094/UDP   4m33s
+blackbox-exporter       ClusterIP   10.96.140.82    <none>        9115/TCP,19115/TCP           5m17s
+grafana                 ClusterIP   10.96.163.156   <none>        3000/TCP                     5m17s
+kube-state-metrics      ClusterIP   None            <none>        8443/TCP,9443/TCP            5m16s
+node-exporter           ClusterIP   None            <none>        9100/TCP                     5m16s
+prometheus-adapter      ClusterIP   10.96.103.44    <none>        443/TCP                      5m15s
+prometheus-k8s          ClusterIP   10.96.62.176    <none>        9090/TCP,8080/TCP            5m16s
+prometheus-operated     ClusterIP   None            <none>        9090/TCP                     4m33s
+prometheus-operator     ClusterIP   None            <none>        8443/TCP                     5m15s
+kubectl get servicemonitor -n monitoring
+NAME                      AGE
+alertmanager-main         5m20s
+blackbox-exporter         5m20s
+coredns                   5m19s
+grafana                   5m20s
+kube-apiserver            5m19s
+kube-controller-manager   5m19s
+kube-scheduler            5m19s
+kube-state-metrics        5m19s
+kubelet                   5m19s
+node-exporter             5m19s
+prometheus-adapter        5m18s
+prometheus-k8s            5m19s
+prometheus-operator       5m18s
+
+==================================
+
+kubectl get all -n monitoring
+NAME                                      READY   STATUS    RESTARTS   AGE
+pod/alertmanager-main-0                   2/2     Running   0          8m8s
+pod/alertmanager-main-1                   2/2     Running   0          8m8s
+pod/alertmanager-main-2                   2/2     Running   0          8m8s
+pod/blackbox-exporter-d4d45d65-97rsc      3/3     Running   0          8m52s
+pod/grafana-68958fc7b9-prc7n              1/1     Running   0          8m52s
+pod/kube-state-metrics-6d8b8c455-hr4xk    3/3     Running   0          8m51s
+pod/node-exporter-2klvg                   2/2     Running   0          8m51s
+pod/node-exporter-95wr5                   2/2     Running   0          8m51s
+pod/node-exporter-wth72                   2/2     Running   0          8m51s
+pod/node-exporter-zdbb9                   2/2     Running   0          8m51s
+pod/prometheus-adapter-784f566c54-bt822   1/1     Running   0          8m50s
+pod/prometheus-adapter-784f566c54-z6j6t   1/1     Running   0          8m50s
+pod/prometheus-k8s-0                      2/2     Running   0          8m8s
+pod/prometheus-k8s-1                      2/2     Running   0          8m7s
+pod/prometheus-operator-7cd6d5b6b-xvwm8   2/2     Running   0          8m50s
+
+NAME                            TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)                      AGE
+service/alertmanager-main       ClusterIP   10.96.227.212   <none>        9093/TCP,8080/TCP            8m52s
+service/alertmanager-operated   ClusterIP   None            <none>        9093/TCP,9094/TCP,9094/UDP   8m8s
+service/blackbox-exporter       ClusterIP   10.96.140.82    <none>        9115/TCP,19115/TCP           8m52s
+service/grafana                 ClusterIP   10.96.163.156   <none>        3000/TCP                     8m52s
+service/kube-state-metrics      ClusterIP   None            <none>        8443/TCP,9443/TCP            8m51s
+service/node-exporter           ClusterIP   None            <none>        9100/TCP                     8m51s
+service/prometheus-adapter      ClusterIP   10.96.103.44    <none>        443/TCP                      8m50s
+service/prometheus-k8s          ClusterIP   10.96.62.176    <none>        9090/TCP,8080/TCP            8m51s
+service/prometheus-operated     ClusterIP   None            <none>        9090/TCP                     8m8s
+service/prometheus-operator     ClusterIP   None            <none>        8443/TCP                     8m50s
+
+NAME                           DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR            AGE
+daemonset.apps/node-exporter   4         4         4       4            4           kubernetes.io/os=linux   8m51s
+
+NAME                                  READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/blackbox-exporter     1/1     1            1           8m52s
+deployment.apps/grafana               1/1     1            1           8m52s
+deployment.apps/kube-state-metrics    1/1     1            1           8m51s
+deployment.apps/prometheus-adapter    2/2     2            2           8m51s
+deployment.apps/prometheus-operator   1/1     1            1           8m50s
+
+NAME                                            DESIRED   CURRENT   READY   AGE
+replicaset.apps/blackbox-exporter-d4d45d65      1         1         1       8m52s
+replicaset.apps/grafana-68958fc7b9              1         1         1       8m52s
+replicaset.apps/kube-state-metrics-6d8b8c455    1         1         1       8m51s
+replicaset.apps/prometheus-adapter-784f566c54   2         2         2       8m51s
+replicaset.apps/prometheus-operator-7cd6d5b6b   1         1         1       8m50s
+
+NAME                                 READY   AGE
+statefulset.apps/alertmanager-main   3/3     8m8s
+statefulset.apps/prometheus-k8s      2/2     8m8s
+
+
+Depos de instalar td, como vamos acessar os services? já que os mesmo estão ClusterIP?
+(Podemos criar uma regra no ingress ou um service nodeport) no nosso caso não faremos isso agora.
+Usaremos o seguinte comando
+kubectl port-forward -n monitoring svc/grafana 33000:3000
+
+
+kubectl get services -A
+NAMESPACE     NAME                    TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)                        AGE
+default       kubernetes              ClusterIP   10.96.0.1       <none>        443/TCP                        124d
+default       nginx-certificado       ClusterIP   10.96.184.203   <none>        80/TCP,443/TCP                 6d
+kube-system   kube-dns                ClusterIP   10.96.0.10      <none>        53/UDP,53/TCP,9153/TCP         124d
+kube-system   kubelet                 ClusterIP   None            <none>        10250/TCP,10255/TCP,4194/TCP   20m
+monitoring    alertmanager-main       ClusterIP   10.96.227.212   <none>        9093/TCP,8080/TCP              21m
+monitoring    alertmanager-operated   ClusterIP   None            <none>        9093/TCP,9094/TCP,9094/UDP     20m
+monitoring    blackbox-exporter       ClusterIP   10.96.140.82    <none>        9115/TCP,19115/TCP             21m
+monitoring    grafana                 ClusterIP   10.96.163.156   <none>        3000/TCP                       21m
+monitoring    kube-state-metrics      ClusterIP   None            <none>        8443/TCP,9443/TCP              21m
+monitoring    node-exporter           ClusterIP   None            <none>        9100/TCP                       21m
+monitoring    prometheus-adapter      ClusterIP   10.96.103.44    <none>        443/TCP                        21m
+monitoring    prometheus-k8s          ClusterIP   10.96.62.176    <none>        9090/TCP,8080/TCP              21m
+monitoring    prometheus-operated     ClusterIP   None            <none>        9090/TCP                       20m
+monitoring    prometheus-operator     ClusterIP   None            <none>        8443/TCP                       21m
+
+Vamos usar o comando 
+kubectl create 
