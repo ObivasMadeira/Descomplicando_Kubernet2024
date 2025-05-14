@@ -557,5 +557,9 @@ monitoring    prometheus-k8s          ClusterIP   10.96.62.176    <none>        
 monitoring    prometheus-operated     ClusterIP   None            <none>        9090/TCP                       20m
 monitoring    prometheus-operator     ClusterIP   None            <none>        8443/TCP                       21m
 
-Vamos usar o comando 
-kubectl create 
+===========================================================
+Subimos para analisar tb o prometheus e o alertmanager
+
+kubectl port-forward -n monitoring svc/prometheus-k8s 39090:9090
+kubectl port-forward -n monitoring svc/alertmanager-main 39093:9093
+ 
