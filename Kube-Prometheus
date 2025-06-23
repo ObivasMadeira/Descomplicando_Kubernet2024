@@ -1014,3 +1014,81 @@ spec:
 =========================================================
 PodMonitor
 
+Primeiro vamos criar um pod de nginx para testar
+
+Yaml do pod
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-pod
+  labels:
+    app: nginx
+spec:
+  containers:
+    - name: nginx
+      image: nginx
+      ports:
+        - containerPort: 80
+          name: http
+      volumeMounts:
+        - name: nginx-config
+          mountPath: /etc/nginx/conf.d/default.conf
+          subPath: nginx.conf
+    - name: nginx-exporter
+      image: 'nginx/nginx-prometheus-exporter:0.11.0'
+      args:
+        - '-nginx.scrape-uri=http://localhost/metrics'
+      resources:
+        limits:
+          memory: 128Mi
+          cpu: 0.3
+      ports:
+        - containerPort: 9113
+          name: metrics
+  volumes:
+    - name: nginx-config
+      configMap:
+        name: nginx-config
+        defaultMode: 420
+
+Aplicar o pod
+kubectl apply -f nginx-pod.yaml
+
+Verificar o pod se subiu corretamente
+kubectl get pods
+NAME                            READY   STATUS    RESTARTS       AGE
+nginx-pod                       2/2     Running   0              5m33s
+
+Agora vamos subir um novo pod, com o nome de nginx-podmonitor.yaml
+
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: nginx-podmonitor
+  labels:
+    app: nginx
+spec:
+  namespaceSelector:
+    matchNames:
+      - default
+  selector:
+    matchLabels:
+      app: nginx
+  podMetricsEndpoints:
+    - interval: 10s
+      path: /metrics
+      targetPort: 0113
+
+kubectl get podmonitors.monitoring.coreos.com
+NAME               AGE
+nginx-podmonitor   7s
+
+Agora vamos validar se esta funcionando
+
+kubectl port-forward -n monitoring svc/prometheus-k8s 39090:9090
+Forwarding from 127.0.0.1:39090 -> 9090
+Forwarding from [::1]:39090 -> 9090
+Handling connection for 39090
+Handling connection for 39090
+Handling connection for 39090
