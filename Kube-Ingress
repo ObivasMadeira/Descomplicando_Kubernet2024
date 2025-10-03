@@ -67,3 +67,38 @@ kubectl wait --namespace ingress-nginx \
 
 No comando acima, estamos esperando que os pods do Ingress Controller estejam prontos, 
 com o label app.kubernetes.io/component=controller, no namespace ingress-nginx, e caso não estejam prontos em 90 segundos, o comando irá falhar.
+
+========================================
+Vamos criar um deployment da aplicação giropops senha, na namespace obivas
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: giropops-senhas
+  name: giropops-senhas
+  namespace: obivas
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: giropops-senhas
+  template:
+    metadata:
+      labels:
+        app: giropops-senhas
+    spec:
+      containers:
+      - name: giropops-senhas
+        image: linuxtips/giropops-senhas:1.0
+        ports:
+        - containerPort: 5000
+        imagePullPolicy: Always
+~                                                                                                                                                                                                                                      
+~                                     
+kubectl get pods -n obivas
+NAME                               READY   STATUS    RESTARTS   AGE
+giropops-senhas-69c89f4c5d-bwv5g   1/1     Running   0          81s
+giropops-senhas-69c89f4c5d-dt2vp   1/1     Running   0          82s
+
+
