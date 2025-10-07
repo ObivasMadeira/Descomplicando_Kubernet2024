@@ -101,4 +101,99 @@ NAME                               READY   STATUS    RESTARTS   AGE
 giropops-senhas-69c89f4c5d-bwv5g   1/1     Running   0          81s
 giropops-senhas-69c89f4c5d-dt2vp   1/1     Running   0          82s
 
+Vamos criar tb um service
 
+apiVersion: v1
+kind: Service
+metadata:
+  name: giropops-senhas
+  labels:
+    app: giropops-senhas
+spec:
+  type: ClusterIP
+  selector:
+    app: giropops-senhas
+  ports:
+    - name: tcp-app
+      protocol: TCP
+      port: 5000
+      targetPort: 5000
+
+Agora vamos criar o redis e seu service
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-deployment
+  labels:
+    app: redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+        - name: redis
+          image: redis
+          ports:
+            - containerPort: 6379
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "250m"
+              memory: "256Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  labels:
+    app: redis
+spec:
+  ports:
+    - port: 6379
+      targetPort: 6379
+  selector:
+    app: redis
+  type: ClusterIP
+
+Outra coisa importante é alterar no deployment do giropos-senhas, pois temo q adicionar ENV para se conectar ao serviço do redis foi adicionado:
+
+"env:
+        - name: REDIS_HOST
+          value: redis"
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: giropops-senhas
+  name: giropops-senhas
+  namespace: obivas
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: giropops-senhas
+  template:
+    metadata:
+      labels:
+        app: giropops-senhas
+    spec:
+      containers:
+      - name: giropops-senhas
+        env:
+        - name: REDIS_HOST
+          value: redis
+        image: linuxtips/giropops-senhas:1.0
+        ports:
+        - containerPort: 5000
+        imagePullPolicy: Always
+~                                                               
