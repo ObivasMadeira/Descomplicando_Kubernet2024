@@ -197,3 +197,61 @@ spec:
         - containerPort: 5000
         imagePullPolicy: Always
 ~                                                               
+Criando o ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: giropops-senhas
+  annotations:
+    nginx.ingress.kubernetes.oi/rewrite-target: /
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /giropops-senhas
+        pathType: Prefix
+        backend:
+          service:
+            name: giropops-senhas
+            port:
+              number: 5000
+k apply -f ingress.yaml
+kubectl get ingress
+NAME              CLASS    HOSTS   ADDRESS   PORTS   AGE
+giropops-senhas   <none>   *                 80      11m
+
+Após tds esses passo a aplicação respondeu no navagador usando 
+localhost/giropops-senhas
+mas a mesma retornou quebrada, erro ocorre porque o link do logo aponta para /, mas o Ingress só serve /giropops-senhas.
+Corrijimos o link do logo para /giropops-senhas.
+ingress.yaml alterada pra funcionar hehehehe
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: giropops-senhas
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /giropops-senhas(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: giropops-senhas
+            port:
+              number: 5000
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: giropops-senhas
+            port:
+              number: 5000
+
+
+
+
+
