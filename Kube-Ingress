@@ -251,7 +251,31 @@ spec:
             port:
               number: 5000
 
+Agora vamos configurar para acessar mais de um 1 serviço
+cria um novo ingress
 
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - host: giropops.nginx.io
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: nginx
+            port:
+              number: 80
 
+Subimos um pod de ngnix e tb o svc para o funcionamamento correto
+Para testarmos o ngnix via ingress criamos ums "dns" no hosts.
+127.0.0.1 giropops.nginx.io
+E pronto agora temos giropops-senhas e giropops.nginx.io executando
 
 
