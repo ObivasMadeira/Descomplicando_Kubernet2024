@@ -277,5 +277,11 @@ Subimos um pod de ngnix e tb o svc para o funcionamamento correto
 Para testarmos o ngnix via ingress criamos ums "dns" no hosts.
 127.0.0.1 giropops.nginx.io
 E pronto agora temos giropops-senhas e giropops.nginx.io executando
+=======================================
+OBS: algo muito importante mas não tivemos como testar na prática foi o ingressClass, pois somente no eks para validar, mas o Jef simulou com nós a crianção no EKS e foi loco.
+Finalizamos aqui o décimo primeiro dia falando sobre ingress.
+
+
+
 
 
