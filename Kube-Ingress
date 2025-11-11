@@ -280,7 +280,7 @@ E pronto agora temos giropops-senhas e giropops.nginx.io executando
 =======================================
 OBS: algo muito importante mas não tivemos como testar na prática foi o ingressClass, pois somente no eks para validar, mas o Jef simulou com nós a crianção no EKS e foi loco.
 Finalizamos aqui o décimo primeiro dia falando sobre ingress.
-
+===========================================
 
 
 
