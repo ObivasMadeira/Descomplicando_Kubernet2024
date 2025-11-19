@@ -90,3 +90,197 @@ obivas-worker          16m          0%       293Mi           1%
 obivas-worker2         13m          0%       201Mi           1%          
 obivas-worker3         16m          0%       273Mi           1%          
 obivas-worker4         18m          0%       305Mi           1%          
+============================================================
+Vamos criar um deployment do nginx para testar o HPA
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.27-alpine
+        ports:
+        - containerPort: 80
+          name: http
+          protocol: TCP
+        resources:
+          limits:
+            memory: "32Mi"
+            cpu: "0.02m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+  labels:
+    app: nginx
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+    name: http
+  selector:
+    app: nginx
+
+kubectl apply -f nginx_hpa.yaml
+kubectl get pods
+NAME                                READY   STATUS    RESTARTS      AGE
+giropops-senhas-b887fccdc-gp7sd     1/1     Running   3 (17m ago)   6d22h
+giropops-senhas-b887fccdc-np8pc     1/1     Running   3 (17m ago)   6d22h
+giropops-senhas-b887fccdc-s58tb     1/1     Running   3 (17m ago)   6d22h
+nginx-deployment-86d479fdff-xt6pg   1/1     Running   0             66s
+redis-deployment-764df994c-mwp98    1/1     Running   3 (17m ago)   6d22h
+
+Agora vamos criar nosso primeiro HPA
+
+# Definição do HPA para o nginx-deployment
+apiVersion: autoscaling/v2  # Versão da API que define um HPA
+kind: HorizontalPodAutoscaler  # Tipo de recurso que estamos definindo
+metadata:
+  name: nginx-deployment-hpa  # Nome do nosso HPA
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1        # A versão da API do recurso alvo
+    kind: Deployment           # O tipo de recurso alvo
+    name: nginx-deployment     # O nome do recurso alvo
+  minReplicas: 3               # Número mínimo de réplicas
+  maxReplicas: 5              # Número máximo de réplicas
+  metrics:
+  - type: Resource             # Tipo de métrica (recurso do sistema)
+    resource:
+      name: cpu                # Nome da métrica (CPU neste caso)
+      target:
+        type: Utilization      # Tipo de alvo (utilização)
+        averageUtilization: 50 # Valor alvo (50% de utilização)
+
+k get hpa
+NAME        REFERENCE                     TARGETS         MINPODS   MAXPODS   REPLICAS   AGE
+nginx-hpa   Deployment/nginx-deployment   <unknown>/50%   3         5         1          4m43s
+
+k describe deployment nginx-deployment
+Name:                   nginx-deployment
+Namespace:              default
+CreationTimestamp:      Tue, 18 Nov 2025 20:48:05 -0300
+Labels:                 app=nginx
+Annotations:            deployment.kubernetes.io/revision: 1
+Selector:               app=nginx
+Replicas:               3 desired | 3 updated | 3 total | 3 available | 0 unavailable
+StrategyType:           RollingUpdate
+MinReadySeconds:        0
+RollingUpdateStrategy:  25% max unavailable, 25% max surge
+Pod Template:
+  Labels:  app=nginx
+  Containers:
+   nginx:
+    Image:      nginx:1.27-alpine
+    Port:       80/TCP (http)
+    Host Port:  0/TCP (http)
+    Limits:
+      cpu:         1m
+      memory:      32Mi
+    Environment:   <none>
+    Mounts:        <none>
+  Volumes:         <none>
+  Node-Selectors:  <none>
+  Tolerations:     <none>
+Conditions:
+  Type           Status  Reason
+  ----           ------  ------
+  Progressing    True    NewReplicaSetAvailable
+  Available      True    MinimumReplicasAvailable
+OldReplicaSets:  <none>
+NewReplicaSet:   nginx-deployment-86d479fdff (3/3 replicas created)
+Events:
+  Type    Reason             Age    From                   Message
+  ----    ------             ----   ----                   -------
+  Normal  ScalingReplicaSet  20m    deployment-controller  Scaled up replica set nginx-deployment-86d479fdff to 1
+  Normal  ScalingReplicaSet  3m12s  deployment-controller  Scaled up replica set nginx-deployment-86d479fdff to 3
+
+k get pods
+NAME                                READY   STATUS    RESTARTS      AGE
+giropops-senhas-b887fccdc-gp7sd     1/1     Running   3 (36m ago)   6d22h
+giropops-senhas-b887fccdc-np8pc     1/1     Running   3 (35m ago)   6d22h
+giropops-senhas-b887fccdc-s58tb     1/1     Running   3 (36m ago)   6d22h
+nginx-deployment-86d479fdff-hj88m   1/1     Running   0             2m12s
+nginx-deployment-86d479fdff-msgsx   1/1     Running   0             2m12s
+nginx-deployment-86d479fdff-xt6pg   1/1     Running   0             19m
+redis-deployment-764df994c-mwp98    1/1     Running   3 (36m ago)   6d23h
+
+k describe hpa nginx
+Name:                                                  nginx-hpa
+Namespace:                                             default
+Labels:                                                <none>
+Annotations:                                           <none>
+CreationTimestamp:                                     Tue, 18 Nov 2025 21:01:09 -0300
+Reference:                                             Deployment/nginx-deployment
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  0% (0) / 50%
+Min replicas:                                          3
+Max replicas:                                          5
+Deployment pods:                                       3 current / 3 desired
+Conditions:
+  Type            Status  Reason               Message
+  ----            ------  ------               -------
+  AbleToScale     True    ScaleDownStabilized  recent recommendations were higher than current one, applying the highest recent recommendation
+  ScalingActive   True    ValidMetricFound     the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange   the desired count is within the acceptable range
+Events:
+  Type     Reason             Age                     From                       Message
+  ----     ------             ----                    ----                       -------
+  Warning  FailedGetScale     5m46s (x17 over 9m50s)  horizontal-pod-autoscaler  deployments/scale.apps "nginx" not found
+  Normal   SuccessfulRescale  5m29s                   horizontal-pod-autoscaler  New size: 3; reason: Current number of replicas below Spec.MinReplicas
+
+Exemplos Práticos com HPA
+
+Agora que você já entende o básico sobre o HPA, é hora de rolar as mangas e entrar na prática. Vamos explorar como o HPA responde a diferentes métricas e cenários.
+Autoscaling com base na utilização de CPU
+
+Vamos começar com um exemplo clássico de escalonamento baseado na utilização da CPU, que já discutimos anteriormente. Para tornar a aprendizagem mais interativa, vamos simular um aumento de tráfego e observar como o HPA responde a essa mudança.
+
+kubectl run -i --tty load-generator --image=busybox /bin/sh
+
+while true; do wget -q -O- http://nginx-deployment.default.svc.cluster.local; done
+
+Este script simples cria uma carga constante no nosso deployment, fazendo requisições contínuas ao servidor Nginx. Você poderá observar como o HPA ajusta o número de réplicas para manter a utilização da CPU em torno do limite definido.
+Autoscaling com base na utilização de Memória
+
+O HPA não é apenas um mestre em lidar com a CPU, ele também tem um olho afiado para a memória. Vamos explorar como configurar o HPA para escalar baseado na utilização de memória.
+
+# Definição do HPA para escalonamento baseado em memória
+apiVersion: autoscaling/v2  # Versão da API que define um HPA
+kind: HorizontalPodAutoscaler    # Tipo de recurso que estamos definindo
+metadata:
+  name: nginx-deployment-hpa-memory  # Nome do nosso HPA
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1              # A versão da API do recurso alvo
+    kind: Deployment                 # O tipo de recurso alvo
+    name: nginx-deployment           # O nome do recurso alvo
+  minReplicas: 3                     # Número mínimo de réplicas
+  maxReplicas: 10                    # Número máximo de réplicas
+  metrics:
+  - type: Resource                   # Tipo de métrica (recurso do sistema)
+    resource:
+      name: memory                   # Nome da métrica (memória neste caso)
+      target:
+        type: Utilization            # Tipo de alvo (utilização)
+        averageUtilization: 70       # Valor alvo (70% de utilização)
+
+Neste exemplo, o HPA vai ajustar o número de réplicas para manter a utilização de memória em cerca de 70%. Assim, nosso deployment pode respirar livremente mesmo quando a demanda aumenta.
+
+
