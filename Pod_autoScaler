@@ -282,5 +282,117 @@ spec:
         averageUtilization: 70       # Valor alvo (70% de utilização)
 
 Neste exemplo, o HPA vai ajustar o número de réplicas para manter a utilização de memória em cerca de 70%. Assim, nosso deployment pode respirar livremente mesmo quando a demanda aumenta.
+===========================
+OBS:
+
+Tiver que alterar meu ingress para funcionar as duas aplicações q estou usando, giropops-senhas e locuts para teste de cpu, se algum dias quiser usar outro app no mesmo formato é só add
+ 
+host: outra-app.localhost
+  http:
+    paths:
+    - path: /
+      pathType: Prefix
+      backend:
+        service:
+          name: nome-do-service
+          port:
+            number: porta
 
 
+Segue o novo ingress
+
+# Service para o Locust
+apiVersion: v1
+kind: Service
+metadata:
+  name: locust-service
+spec:
+  selector:
+    app: locust-giropops
+  ports:
+  - protocol: TCP
+    port: 8089
+    targetPort: 8089
+  type: ClusterIP
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: apps-ingress
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: giropops.localhost #giropops-senhas
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: giropops-senhas
+            port:
+              number: 5000
+  - host: locust.localhost
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: locust-giropops
+            port:
+              number: 8089
+
+
+=============================================
+Após a ferramenta locust funcionar usando ingress, testamos a mesma, e o HPA fez o scale
+
+kubectl describe hpa nginx
+Name:                                                  nginx-hpa
+Namespace:                                             default
+Labels:                                                <none>
+Annotations:                                           <none>
+CreationTimestamp:                                     Tue, 18 Nov 2025 21:01:09 -0300
+Reference:                                             Deployment/nginx-deployment
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  600% (6m) / 50%
+Min replicas:                                          3
+Max replicas:                                          5
+Deployment pods:                                       5 current / 5 desired
+Conditions:
+  Type            Status  Reason               Message
+  ----            ------  ------               -------
+  AbleToScale     True    ScaleDownStabilized  recent recommendations were higher than current one, applying the highest recent recommendation
+  ScalingActive   True    ValidMetricFound     the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  True    TooManyReplicas      the desired replica count is more than the maximum replica count
+Events:
+  Type    Reason             Age    From                       Message
+  ----    ------             ----   ----                       -------
+  Normal  SuccessfulRescale  3m18s  horizontal-pod-autoscaler  New size: 4; reason: cpu resource utilization (percentage of request) above target
+  Normal  SuccessfulRescale  3m3s   horizontal-pod-autoscaler  New size: 5; reason: cpu resource utilization (percentage of request) above target
+
+As configurações que usamos foi 1000 user, 100 Spawn rate (users started/second) e host http://nginx-service
+
+Depois de um tempo ele matou os pods que foram criados
+
+k get pods -w
+NAME                                READY   STATUS    RESTARTS       AGE
+giropops-senhas-b887fccdc-gp7sd     1/1     Running   3 (124m ago)   7d
+giropops-senhas-b887fccdc-np8pc     1/1     Running   3 (124m ago)   7d
+giropops-senhas-b887fccdc-s58tb     1/1     Running   3 (124m ago)   7d
+locust-giropops-8789f646c-lnnmh     1/1     Running   0              64m
+nginx-deployment-86d479fdff-4bt9k   1/1     Running   0              7m38s
+nginx-deployment-86d479fdff-hj88m   1/1     Running   0              90m
+nginx-deployment-86d479fdff-msgsx   1/1     Running   0              90m
+nginx-deployment-86d479fdff-q68q5   1/1     Running   0              7m23s
+nginx-deployment-86d479fdff-xt6pg   1/1     Running   0              108m
+redis-deployment-764df994c-mwp98    1/1     Running   3 (124m ago)   7d
+nginx-deployment-86d479fdff-q68q5   1/1     Terminating   0              10m
+nginx-deployment-86d479fdff-q68q5   0/1     Terminating   0              10m
+nginx-deployment-86d479fdff-q68q5   0/1     Terminating   0              10m
+nginx-deployment-86d479fdff-q68q5   0/1     Terminating   0              10m
+nginx-deployment-86d479fdff-4bt9k   1/1     Terminating   0              11m
+nginx-deployment-86d479fdff-4bt9k   0/1     Terminating   0              11m
+nginx-deployment-86d479fdff-4bt9k   0/1     Terminating   0              11m
+nginx-deployment-86d479fdff-4bt9k   0/1     Terminating   0              11m
