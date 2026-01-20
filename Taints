@@ -1,0 +1,94 @@
+#vai
+
+Hj iremos falar sobre Taints.
+
+No Kubernetes, taints são um mecanismo de controle de agendamento (scheduling) usado para impedir ou restringir que Pods sejam alocados em determinados Nodes, a menos que esses Pods declarem explicitamente que toleram essa restrição.
+
+Eles funcionam de forma inversa aos labels/affinity:
+o Node “rejeita” o Pod, em vez do Pod “escolher” o Node.
+
+Conceito básico
+
+Um taint é aplicado no Node e possui três componentes:
+key=value:effect
+
+Exemplo:
+dedicated=gpu:NoSchedule
+
+Isso significa:
+Nodes marcados com esse taint não aceitam Pods
+Exceto Pods que tenham uma toleration compatível
+
+Effects (efeitos) do taint
+1. NoSchedule
+O scheduler não agenda novos Pods
+Pods existentes não são removidos
+Uso típico:
+Nodes dedicados (DB, GPU, workloads críticos)
+
+2. PreferNoSchedule
+O scheduler evita, mas não proíbe
+Pode agendar se não houver alternativa
+Uso típico:
+Workloads preferenciais, não críticos
+
+3. NoExecute
+Pods existentes são removidos
+Pods novos não são agendados
+Pode haver um tolerationSeconds
+Uso típico:
+Nodes degradados
+Manutenção
+Isolamento imediato
+
+===============
+
+kubectl taint nodes node-1 dedicated=infra:NoSchedule
+
+Pod sem toleration
+
+❌ Não será agendado nesse Node
+
+Pod com toleration
+apiVersion: v1
+kind: Pod
+metadata:
+  name: app
+spec:
+  tolerations:
+  - key: "dedicated"
+    operator: "Equal"
+    value: "infra"
+    effect: "NoSchedule"
+  containers:
+  - name: app
+    image: nginx
+
+Taints × Tolerations × Affinity
+Recurso	Função
+Taint	Node rejeita Pods
+Toleration	Pod aceita Node
+NodeAffinity	Pod escolhe Node
+PodAffinity	Pod quer estar perto de outros Pods
+
+👉 Normalmente, usa-se taints + tolerations junto com nodeSelector ou affinity para controle fino.
+
+Casos comuns de uso
+
+Separar workloads:
+
+Infra
+
+Aplicações
+
+Batch
+
+Nodes com GPU
+
+Nodes de banco de dados
+
+Ambiente multi-tenant
+
+Manutenção de Nodes
+
+Spot / Preemptible Nodes
