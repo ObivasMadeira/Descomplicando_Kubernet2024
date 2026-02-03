@@ -92,3 +92,86 @@ Ambiente multi-tenant
 Manutenção de Nodes
 
 Spot / Preemptible Nodes
+======================================================================
+Taint AntiAffinity, tb criamos um deploymente seguindo esse modelo de antiaffinity, isso ajudar a deixar de fato sua aplicação 
+mais segura, no caso não deixando td em um só nó do seu cluster.
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: nginx
+  name: nginx
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: nginx
+
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - image: nginx
+        name: nginx
+        ports:
+        - containerPort: 80
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                app: nginx
+            topologyKey: "az"
+~                                                                                                                                                 
+~                                                                                                                                                 
+~                                                         
+
+Nesse modelo usamos "topologyKey=az" forçando assim a colocar um pode em cada az ou tb podemos fazer por região, usando 
+topologyKey: "az".
+
+====================================================
+
+Outro modelo é o "preferred"
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: nginx
+  name: nginx
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: nginx
+
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - image: nginx
+        name: nginx
+        ports:
+        - containerPort: 80
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app: nginx
+              topologyKey: "kubernetes.io/hostname"
+~                                                                                                                                                 
+~                                                            
+==============================================================
+
+
+
+
+
