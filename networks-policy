@@ -86,8 +86,36 @@ ingressclass.networking.k8s.io/nginx created
 validatingwebhookconfiguration.admissionregistration.k8s.io/ingress-nginx-admission created
 
 ================================================
+Vamos criar a primeiro netpol para limitar o acesso de outros pod fora da nossa namespace giropops
 
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: redis-deny-from-outside
+  namespace: giropops
+spec:
+  podSelector:
+    matchLabels:
+      app: redis
+  ingress:
+  - from:
+    - podSelector: {}
 
+Para testar rodamos um
 
+k run -ti alpine --image alpine --sh
 
+e dentro deles
+
+instalamos primeiro o curl para teste, "apk add curl"
+
+curl girpops-senhas.giropos.svc.cluster.local:500
+isso ira trazer o html do giropos-senhas
+
+tb podemos testar o redis
+ apk add redis
+
+redis-cli -h redis-service.svc ping o redis ira responder "pong"
+
+Mas depois de subir essa netpol, ao tentar fazer o mesmo passo a passo de curl essa netpol não ira permitir somente se o pod do curl estiver na namespace giropops
 
