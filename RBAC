@@ -1,0 +1,254 @@
+RBAC
+O que é RBAC?
+RBAC é um acrônimo para Role-Based Access Control, ou Controle de Acesso Baseado em Funções. É um método de controle de acesso que permite que um administrador defina permissões específicas para usuários e grupos de usuários.
+Isso significa que os administradores podem controlar quem tem acesso a quais recursos e o que eles podem fazer com esses recursos.
+No Kubernetes é super importante você entender como funciona o RBAC, pois é através dele que você vai definir as permissões de acesso aos recursos do cluster, como por exemplo, quem pode criar um Pod, um Deployment, um Service, etc.
+Primeiro exemplo de RBAC
+Vamos imaginar que precisamos dar acesso ao cluster a uma pessoa desenvolvedora da nossa empresa, mas não queremos que ela tenha acesso a todos os recursos do cluster, apenas aos recursos que ela precisa para desenvolver a sua aplicação.
+Para isso, vamos criar um usuário chamado developer e vamos dar acesso a ele para criar e administrar os Pods no namespace dev.
+Temos duas formas de fazer isso, a primeira e mais antiga é através da criação de um Token de acesso, e a que iremos abordar na sequência é através da criação de um certificado. O Token é mais utilizado para dar acesso a um ServiceAccount, que é um usuário que não é humano. Por exemplo, podemos ter um ServiceAccount para o Prometheus poder coletar métricas do cluster, ou um ServiceAccount para o Fluentd poder coletar os logs do cluster. E podemos ter um User para um usuário humano, como por exemplo, o usuário developer que iremos criar.
+===========================================
+Criando um Usuário para acesso ao cluster
+Bem, agora que já sabemos quais serão as permissões do nosso novo usuário, já podemos iniciar a sua criação.
+Primeira coisa que precisamos é criar uma chave privada para o nosso usuário. Para isso, vamos utilizar o comando openssl:
+
+openssl genrsa -out developer.key 2048
+
+Com o comando acima estamos criando uma chave privadas de 2048 bits e salvando ela no arquivo developer.key. O parametro genrsa indica que queremos gerar uma chave privada, e o parametro -out indica o nome do arquivo que queremos salvar a chave.
+Com a chave criada, precisa agora criar a um CSR, ou Certificate Signing Request, que é um arquivo que contém o certificado que criamos, e que será enviado para o Kubernetes assinar e gerar o certificado final.
+
+openssl req -new -key developer.key -out developer.csr -subj "/CN=developer"
+
+No comando acima estamos criando um certificado para o nosso usuário, utilizando a chave privada que criamos anteriormente. O parametro req indica que queremos criar um certificado, o parametro -key indica o nome do arquivo da chave privada que queremos utilizar, o parametro -out indica o nome do arquivo que queremos salvar o certificado, e o parametro -subj indica o nome do usuário que queremos criar.
+Pronto, agora com os dois arquivos em mãos, já podemos iniciar a criação do nosso usuário no cluster, mas antes, precisamos criar um CSR, ou Certificate Signing Request, que é um arquivo que contém o certificado que criamos, e que será enviado para o Kubernetes assinar e gerar o certificado final.
+Mas para que possamos criar o arquivo, precisamos antes ter o conteúdo do certificado em base64, para isso, vamos utilizar o comando base64:
+
+cat developer.csr | base64 | tr -d '\n'
+
+Com o comando acima estamos lendo o conteúdo do arquivo developer.csr, convertendo ele para base64, e removendo a quebra de linha.
+O conteúdo do certificado em base64 será algo parecido com isso:
+
+LS0tLS1CRUdJTiBDRVJUSUZJQ0FURSBSRVFVRVNULS0tLS0KTUlJQ1dUQ0NBVUVDQVFBd0ZERVNNQkFHQTFVRUF3d0paR1YyWld4dmNHVnlNSUlCSWpBTkJna3Foa2lHOXcwQgpBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUF5OFN1Y25JWjJjL0k3dXQvS0EwSXhvN0RZa0hkSUxrbmxZOWNwMkVlClJJSzRzU1NzZnA2SzBhbWZlYWtRaEdXT2NWMmFaeEtTM0xrNERNNlVmb3ZucEQvOXpidDl0em44UUpMTDZxREEKeHFxbzVSbEt4QnpEV3lQT2JkUStMWnI2VjFQZ2wxYms2c3o0d2lWek52a2NhT0doSDdlSU90QVI0U096MjNJdAowZ0xiZHBDalFITFIvNlFuSXBjY3h3bDBGa1FtL3RVeHdRa0x1NXNpSTNKOGRiUkQwcnlFdGxReWQ5elhLM29rCjBRbVpLZDVpV1p2aDU3R1lrV1kweGMzV0J5aXY5OURQYVE3WTB4MFNaWGlPL2w0bTRzazJ3RjYwa2dUa1NJZmQKdEMxN2Y1ZzVWVzhOTW02amNpMFRXeDk5Z0REcmpHanJpaExHeTBLUWdRa2p3d0lEQVFBQm9BQXdEUVlKS29aSQpodmNOQVFFTEJRQURnZ0VCQUllZVdLbjAwZkk5ekw3MUVQNFNpOUVxVUFNUnBYT0dkT1Aybm8rMTV2VzJ5WmpwCmhsTWpVTjMraVZubkh2QVBvWFVLKzBYdXdmaklHMjBQTjA5UEd1alU4aUFIeVZRbFZRS0VaOWpRcENXYnQybngKVlZhYUw0N0tWMUpXMnF3M1YybmNVNkhlNHdtQzVqUE9vU29vVGtrVlF5Uml4bkcyVVQrejI3M2xpaTY3RkFXegpBZ1QvczlVa3gvS1dxRjIzczVuUk9TTlZUS2xCSG5LMU40YkN6RHBqZnN5V01GUXdnazhxRCtlOXp0cTh2c1VhCi9Say9jUWNyS2wxVDMyM0xDcG1TekhnM3hDdjFqdzJUVFFINm1yWlBBa2doa2R2YlNnalp6Y1JRZWNqSEpNeTMKTzFJQXJ6V3pWbU1hRTJqeGhUV1JwbkJkcVZjZERTUERiNkNXaktVPQotLS0tLUVORCBDRVJUSUZJQ0FURSBSRVFVRVNULS0tLS0K 
+
+Lembre-se de remover a quebra de linha do final do arquivo, representada pelo %.
+
+Agora vamos criar um yaml developer.yaml
+
+apiVersion: certificates.k8s.io/v1
+kind: CertificateSigningRequest
+metadata:
+ name: developer
+spec:
+ request: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURSBSRVFVRVNULS0tLS0KTUlJQ1dUQ0NBVUVDQVFBd0ZERVNNQkFHQTFVRUF3d0paR1YyWld4dmNHVnlNSUlCSWpBTkJna3Foa2lHOXcwQgpBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUF5OFN1Y25JWjJjL0k3dXQvS0EwSXhvN0RZa0hkSUxrbmxZOWNwMkVlClJJSzRzU1NzZnA2SzBhbWZlYWtRaEdXT2NWMmFaeEtTM0xrNERNNlVmb3ZucEQvOXpidDl0em44UUpMTDZxREEKeHFxbzVSbEt4QnpEV3lQT2JkUStMWnI2VjFQZ2wxYms2c3o0d2lWek52a2NhT0doSDdlSU90QVI0U096MjNJdAowZ0xiZHBDalFITFIvNlFuSXBjY3h3bDBGa1FtL3RVeHdRa0x1NXNpSTNKOGRiUkQwcnlFdGxReWQ5elhLM29rCjBRbVpLZDVpV1p2aDU3R1lrV1kweGMzV0J5aXY5OURQYVE3WTB4MFNaWGlPL2w0bTRzazJ3RjYwa2dUa1NJZmQKdEMxN2Y1ZzVWVzhOTW02amNpMFRXeDk5Z0REcmpHanJpaExHeTBLUWdRa2p3d0lEQVFBQm9BQXdEUVlKS29aSQpodmNOQVFFTEJRQURnZ0VCQUllZVdLbjAwZkk5ekw3MUVQNFNpOUVxVUFNUnBYT0dkT1Aybm8rMTV2VzJ5WmpwCmhsTWpVTjMraVZubkh2QVBvWFVLKzBYdXdmaklHMjBQTjA5UEd1alU4aUFIeVZRbFZRS0VaOWpRcENXYnQybngKVlZhYUw0N0tWMUpXMnF3M1YybmNVNkhlNHdtQzVqUE9vU29vVGtrVlF5Uml4bkcyVVQrejI3M2xpaTY3RkFXegpBZ1QvczlVa3gvS1dxRjIzczVuUk9TTlZUS2xCSG5LMU40YkN6RHBqZnN5V01GUXdnazhxRCtlOXp0cTh2c1VhCi9Say9jUWNyS2wxVDMyM0xDcG1TekhnM3hDdjFqdzJUVFFINm1yWlBBa2doa2R2YlNnalp6Y1JRZWNqSEpNeTMKTzFJQXJ6V3pWbU1hRTJqeGhUV1JwbkJkcVZjZERTUERiNkNXaktVPQotLS0tLUVORCBDRVJUSUZJQ0FURSBSRVFVRVNULS0tLS0K 
+ signerName: kubernetes.io/kube-apiserver-client
+ expirationSeconds: 31536000 # 1 year
+ usages:
+ - client auth
+
+Aonde o valor gerar antes é alocado no campo "request"
+
+Depois vamos criar o CSR
+k apply -f developer.yaml
+certificatesigningrequest.certificates.k8s.io/developer created
+
+Verificar se esta ok
+k get csr
+NAME        AGE   SIGNERNAME                            REQUESTOR          REQUESTEDDURATION   CONDITION
+developer   13s   kubernetes.io/kube-apiserver-client   kubernetes-admin   365d                Pending
+
+kubectl describe csr developer
+Name:         developer
+Labels:       <none>
+Annotations:  kubectl.kubernetes.io/last-applied-configuration={"apiVersion":"certificates.k8s.io/v1","kind":"CertificateSigningRequest","metadata":{"annotations":{},"name":"developer"},"spec":{"expirationSeconds":31536000,"request":"LS0tLS1CRUdJTiBDRVJUSUZJQ0FURSBSRVFVRVNULS0tLS0KTUlJQ1dUQ0NBVUVDQVFBd0ZERVNNQkFHQTFVRUF3d0paR1YyWld4dmNHVnlNSUlCSWpBTkJna3Foa2lHOXcwQgpBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUF5OFN1Y25JWjJjL0k3dXQvS0EwSXhvN0RZa0hkSUxrbmxZOWNwMkVlClJJSzRzU1NzZnA2SzBhbWZlYWtRaEdXT2NWMmFaeEtTM0xrNERNNlVmb3ZucEQvOXpidDl0em44UUpMTDZxREEKeHFxbzVSbEt4QnpEV3lQT2JkUStMWnI2VjFQZ2wxYms2c3o0d2lWek52a2NhT0doSDdlSU90QVI0U096MjNJdAowZ0xiZHBDalFITFIvNlFuSXBjY3h3bDBGa1FtL3RVeHdRa0x1NXNpSTNKOGRiUkQwcnlFdGxReWQ5elhLM29rCjBRbVpLZDVpV1p2aDU3R1lrV1kweGMzV0J5aXY5OURQYVE3WTB4MFNaWGlPL2w0bTRzazJ3RjYwa2dUa1NJZmQKdEMxN2Y1ZzVWVzhOTW02amNpMFRXeDk5Z0REcmpHanJpaExHeTBLUWdRa2p3d0lEQVFBQm9BQXdEUVlKS29aSQpodmNOQVFFTEJRQURnZ0VCQUllZVdLbjAwZkk5ekw3MUVQNFNpOUVxVUFNUnBYT0dkT1Aybm8rMTV2VzJ5WmpwCmhsTWpVTjMraVZubkh2QVBvWFVLKzBYdXdmaklHMjBQTjA5UEd1alU4aUFIeVZRbFZRS0VaOWpRcENXYnQybngKVlZhYUw0N0tWMUpXMnF3M1YybmNVNkhlNHdtQzVqUE9vU29vVGtrVlF5Uml4bkcyVVQrejI3M2xpaTY3RkFXegpBZ1QvczlVa3gvS1dxRjIzczVuUk9TTlZUS2xCSG5LMU40YkN6RHBqZnN5V01GUXdnazhxRCtlOXp0cTh2c1VhCi9Say9jUWNyS2wxVDMyM0xDcG1TekhnM3hDdjFqdzJUVFFINm1yWlBBa2doa2R2YlNnalp6Y1JRZWNqSEpNeTMKTzFJQXJ6V3pWbU1hRTJqeGhUV1JwbkJkcVZjZERTUERiNkNXaktVPQotLS0tLUVORCBDRVJUSUZJQ0FURSBSRVFVRVNULS0tLS0K","signerName":"kubernetes.io/kube-apiserver-client","usages":["client auth"]}}
+
+CreationTimestamp:   Mon, 16 Mar 2026 22:06:28 -0300
+Requesting User:     kubernetes-admin
+Signer:              kubernetes.io/kube-apiserver-client
+Requested Duration:  365d
+Status:              Pending
+Subject:
+         Common Name:    developer
+         Serial Number:  
+Events:  <none>
+
+Está em pending, pq precisamos aprovar.
+
+kubectl certificate approve developer
+certificatesigningrequest.certificates.k8s.io/developer approved
+
+k get csr
+NAME        AGE     SIGNERNAME                            REQUESTOR          REQUESTEDDURATION   CONDITION
+developer   3m15s   kubernetes.io/kube-apiserver-client   kubernetes-admin   365d                Approved,Issued
+
+k get csr developer -o jsonpath='{.status.certificate}'
+LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUMrakNDQWVLZ0F3SUJBZ0lSQU80S1hQMVJwcXJoUTgzMjMzMk5CRVl3RFFZSktvWklodmNOQVFFTEJRQXcKRlRFVE1CRUdBMVVFQXhNS2EzVmlaWEp1WlhSbGN6QWVGdzB5TmpBek1UY3dNVEEwTkRCYUZ3MHlOekF6TVRjdwpNVEEwTkRCYU1CUXhFakFRQmdOVkJBTVRDV1JsZG1Wc2IzQmxjakNDQVNJd0RRWUpLb1pJaHZjTkFRRUJCUUFECmdnRVBBRENDQVFvQ2dnRUJBTXZFcm5KeUdkblB5TzdyZnlnTkNNYU93MkpCM1NDNUo1V1BYS2RoSGtTQ3VMRWsKckg2ZWl0R3BuM21wRUlSbGpuRmRtbWNTa3R5NU9Bek9sSDZMNTZRLy9jMjdmYmM1L0VDU3krcWd3TWFxcU9VWgpTc1FjdzFzanptM1VQaTJhK2xkVDRKZFc1T3JNK01JbGN6YjVIR2pob1IrM2lEclFFZUVqczl0eUxkSUMyM2FRCm8wQnkwZitrSnlLWEhNY0pkQlpFSnY3Vk1jRUpDN3ViSWlOeWZIVzBROUs4aExaVU1uZmMxeXQ2Sk5FSm1TbmUKWWxtYjRlZXhtSkZtTk1YTjFnY29yL2ZRejJrTzJOTWRFbVY0anY1ZUp1TEpOc0JldEpJRTVFaUgzYlF0ZTMrWQpPVlZ2RFRKdW8zSXRFMXNmZllBdzY0eG82NG9TeHN0Q2tJRUpJOE1DQXdFQUFhTkdNRVF3RXdZRFZSMGxCQXd3CkNnWUlLd1lCQlFVSEF3SXdEQVlEVlIwVEFRSC9CQUl3QURBZkJnTlZIU01FR0RBV2dCUS9yVjk5T29hb0oybWgKZ0FoZGlmQVJQdTVMeWpBTkJna3Foa2lHOXcwQkFRc0ZBQU9DQVFFQUNZWUVLNU5aNmdHUjFaSGJqd29ZaEhRQwp1R3V3a3dHTXV0b1RPZ1VMK2YzSm56N0NYdlRGUE11eitUeXlhOHlOZUZCZzRqYkNia2ViNno5eE9rQ0xwWXJVCkREa055YXFUSWZ0Q2JHenVweDlnTnJnY0Myd0NGY2czZnJPL1FxcHY5b1FsQ2J6Uml2NUhZcTBRSHdHV0g3eHkKT0w0cU9GMDNLVXkyalAwM3p1ZVdXNmx5ZWl5YmpaMHl1blZ5Z1hzWnFxVzZDL3hGR1krZDV0c2tvNlJ3T0l3bQpLd00wdFJtMGNBeHVBVjRpcE45U0k0VjhJVFNNNGZiRXpzMDV6NXpjMyt3eHNnRVpCY24vbE0zMDRxSkwrdkdXCk1meEU1Y3piUUJWMkd5ald4b0xsL1ViOWpTNis0TGx0K2l0WUxOb2FPWXNKWkkzblVLMUk0WHFNRTA3Q3p3PT0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
+
+Pronto, o nosso certificado foi assinado com sucesso, agora podemos pegar o certificado do nosso usuário e salvar em um arquivo, para isso, vamos utilizar o comando kubectl get csr:
+
+kubectl get csr developer -o jsonpath='{.status.certificate}' | base64 --decode > developer.crt
+
+Agora temos o crt criado
+
+cat developer.crt
+
+-----BEGIN CERTIFICATE-----
+MIIC+jCCAeKgAwIBAgIRAO4KXP1RpqrhQ832332NBEYwDQYJKoZIhvcNAQELBQAw
+FTETMBEGA1UEAxMKa3ViZXJuZXRlczAeFw0yNjAzMTcwMTA0NDBaFw0yNzAzMTcw
+MTA0NDBaMBQxEjAQBgNVBAMTCWRldmVsb3BlcjCCASIwDQYJKoZIhvcNAQEBBQAD
+ggEPADCCAQoCggEBAMvErnJyGdnPyO7rfygNCMaOw2JB3SC5J5WPXKdhHkSCuLEk
+rH6eitGpn3mpEIRljnFdmmcSkty5OAzOlH6L56Q//c27fbc5/ECSy+qgwMaqqOUZ
+SsQcw1sjzm3UPi2a+ldT4JdW5OrM+MIlczb5HGjhoR+3iDrQEeEjs9tyLdIC23aQ
+o0By0f+kJyKXHMcJdBZEJv7VMcEJC7ubIiNyfHW0Q9K8hLZUMnfc1yt6JNEJmSne
+Ylmb4eexmJFmNMXN1gcor/fQz2kO2NMdEmV4jv5eJuLJNsBetJIE5EiH3bQte3+Y
+OVVvDTJuo3ItE1sffYAw64xo64oSxstCkIEJI8MCAwEAAaNGMEQwEwYDVR0lBAww
+CgYIKwYBBQUHAwIwDAYDVR0TAQH/BAIwADAfBgNVHSMEGDAWgBQ/rV99OoaoJ2mh
+gAhdifARPu5LyjANBgkqhkiG9w0BAQsFAAOCAQEACYYEK5NZ6gGR1ZHbjwoYhHQC
+uGuwkwGMutoTOgUL+f3Jnz7CXvTFPMuz+Tyya8yNeFBg4jbCbkeb6z9xOkCLpYrU
+DDkNyaqTIftCbGzupx9gNrgcC2wCFcg3frO/Qqpv9oQlCbzRiv5HYq0QHwGWH7xy
+OL4qOF03KUy2jP03zueWW6lyeiybjZ0yunVygXsZqqW6C/xFGY+d5tsko6RwOIwm
+KwM0tRm0cAxuAV4ipN9SI4V8ITSM4fbEzs05z5zc3+wxsgEZBcn/lM304qJL+vGW
+MfxE5czbQBV2GyjWxoLl/Ub9jS6+4Llt+itYLNoaOYsJZI3nUK1I4XqME07Czw==
+-----END CERTIFICATE-----
+
+Pronto, agora temos o nosso certificado final criado, e podemos utilizá-lo para acessar o cluster,
+mas antes precisamos definir o que o nosso usuário pode fazer no cluster.
+
+===================================
+Vamos agora as roles
+
+Vamos listar os grupos de recursos do Kubernetes:
+
+apiGroups
+
+São os grupos de recursos do Kubernetes, que são divididos em core e named, você pode consultar todos os grupos de recursos do Kubernetes através do comando kubectl api-resources.
+
+kubectl api-resources
+
+A lista é longa, mas o resultado será algo parecido com isso:
+
+NAME                              SHORTNAMES   APIVERSION                             NAMESPACED   KIND
+bindings                                       v1                                     true         Binding
+componentstatuses                 cs           v1                                     false        ComponentStatus
+configmaps                        cm           v1                                     true         ConfigMap
+endpoints                         ep           v1                                     true         Endpoints
+events                            ev           v1                                     true         Event
+limitranges                       limits       v1                                     true         LimitRange
+namespaces                        ns           v1                                     false        Namespace
+nodes                             no           v1                                     false        Node
+persistentvolumeclaims            pvc          v1                                     true         PersistentVolumeClaim
+persistentvolumes                 pv           v1                                     false        PersistentVolume
+pods                              po           v1     
+
+Vamos dar uma olhada em um recurso específico, por exemplo, o recurso pods:
+
+kubectl api-resources | grep pods
+NAME       SHORTNAMES   APIVERSION     NAMESPACED   KIND
+pods       po           v1             true         Pod
+
+Vamos ver outro
+k api-resources | grep certificate
+certificatesigningrequests        csr                                             certificates.k8s.io/v1              false        CertificateSigningRequest
+
+Onde:
+
+    NAME: Nome do recurso.
+    SHORTNAMES: Nome abreviado do recurso.
+    APIVERSION: Versão da API que o recurso está.
+    NAMESPACED: Indica se o recurso é ou não Namespaced.
+    KIND: Tipo do recurso.
+
+
+Criando um Role para o nosso usuário
+
+Quando criamos um novo Usuário ou ServiceAccount no Kubernetes, ele não tem acesso a nada no cluster, para que ele possa acessar os recursos do cluster, precisamos criar um Role e associar ele ao usuário.
+
+A definição da Role consiste em um arquivo onde definimos quais são as permissões que o usuário terá no cluster, e para quais recursos ele terá acesso. Dentro da Role é onde definimos:
+
+    Qual é o namespace que o usuário terá acesso.
+    Quais apiGroups o usuário terá acesso.
+    Quais recursos o usuário terá acesso.
+    Quais verbos o usuário terá acesso.
+
+Outro ponto importante é conhecer os "verbos" é o que cada recurso pode fazer, como exmplo o recurso pod:
+
+k api-resources -o wide | grep pods
+pods   po    v1   true   Pod   create,delete,deletecollection,get,list,patch,update,watch   all
+
+Verbos
+
+Os verbos definem o que o usuário pode fazer com o recurso, por exemplo, o usuário pode criar, listar, atualizar, deletar, etc.
+
+Para que você possa visualizar os verbos que podem ser utilizados, vamos utilizar o comando kubectl api-resources com o parametro -o wide
+
+Criando a Role
+
+Agora que já sabemos muito sobre os resources, apiGroups e verbs, vamos criar a nossa Role para o nosso usuário.
+
+Para isso, vamos criar um arquivo chamado developer-role.yaml com o seguinte conteúdo:
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+ name: developer
+ namespace: dev
+rules:
+- apiGroups: [""] # "" indicates the core API group
+  resources: ["pods"]
+  verbs: ["get", "list", "create"]
+
+Depois de criado vamos aplicar
+
+apply -f role-developer.yaml
+role.rbac.authorization.k8s.io/developer created
+
+k get role -n dev
+NAME        CREATED AT
+developer   2026-03-17T01:34:02Z
+
+kubectl describe role developer -n dev
+Name:         developer
+Labels:       <none>
+Annotations:  <none>
+PolicyRule:
+  Resources  Non-Resource URLs  Resource Names  Verbs
+  ---------  -----------------  --------------  -----
+  pods       []                 []              [get list create]
+
+==============================================
+Criando um RoleBinding para o nosso usuário
+A RoleBinding é o recurso que associa um usuário a uma Role, ou seja, é através da RoleBinding que definimos qual usuário terá acesso a qual Role, é como se tivessemos um crachá de Developer, a Role seria o crachá, e a RoleBinding seria o crachá com o nome do usuário. Faz sentindo?
+Para isso, vamos criar um arquivo chamado developer-rolebinding.yaml com o seguinte conteúdo:
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: DeveloperRoleBinding
+  namespace: dev
+subjects:
+- kind: User
+  name: developer
+roleRef:
+  kind: Role
+  name: developer
+  apiGroup: rbac.authorization.k8s.io
+
+k apply -f rolebinding.yaml 
+rolebinding.rbac.authorization.k8s.io/DeveloperRoleBinding created
+
+k get rolebinding -n dev
+NAME                   ROLE             AGE
+DeveloperRoleBinding   Role/developer   35s
+
+kubectl describe rolebinding DeveloperRoleBinding -n dev
+Name:         DeveloperRoleBinding
+Labels:       <none>
+Annotations:  <none>
+Role:
+  Kind:  Role
+  Name:  developer
+Subjects:
+  Kind  Name       Namespace
+  ----  ----       ---------
+  User  developer  
+
+
