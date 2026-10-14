@@ -39,3 +39,7 @@ flowchart TB
 4. O Argo CD identifica a alteração no repositório GitOps.
 5. O Argo CD sincroniza os manifests com o cluster Kubernetes.
 6. O Kubernetes atualiza os Pods e utiliza a imagem publicada no registry.
+
+
+Um detalhe importante: o Argo CD não faz o deploy da imagem diretamente. Ele reconcilia o estado desejado definido no Git com os recursos Kubernetes. O Kubernetes é responsável por criar ou atualizar os Pods e obter a imagem do Container Registry.
+Essa versão já está pronta para publicar no GitHub.
