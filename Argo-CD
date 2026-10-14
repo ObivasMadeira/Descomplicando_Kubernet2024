@@ -1,0 +1,41 @@
+O ArgoCD é uma ferramenta de... bem, CD! Seu principal papel é sincronizar estado entre aplicações no seu servidor de Git e as aplicações no seu cluster Kubernetes.
+Esse *link* é feito utilizando os **Applications** - que são pequenos manifestos YAML que, de forma geral, indicam:
+
+onde está a aplicação
+pra onde ela vai
+como ela deve ser sincronizada
+
+Para iniciar com ArgoCD, basta instalá-lo no seu cluster Kubernetes:
+
+kubectl create namespace argocd  
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+A arquitetura básica de um repositório em um cluster que utiliza ArgoCD se parece com isso:
+
+## Arquitetura GitOps com Argo CD
+
+```mermaid
+flowchart TB
+    A["Código da Aplicação"] -->|"Pipeline CI"| B["Build da Imagem Docker"]
+    B --> C[("Container Registry")]
+    B -->|"Atualiza tag da imagem"| D[("Repositório GitOps / YAML")]
+
+    subgraph K8S["Cluster Kubernetes"]
+        E["Argo CD"]
+        F["Deployment"]
+        G["Pods da Aplicação"]
+        E -->|"Sincroniza"| F
+        F -->|"Gerencia"| G
+    end
+
+    D -->|"Monitora e sincroniza"| E
+    C -.->|"Pull da imagem"| G
+```
+
+### Fluxo de implantação
+
+1. O desenvolvedor envia alterações ao repositório da aplicação.
+2. O pipeline CI realiza o build e publica a imagem no Container Registry.
+3. O pipeline atualiza a referência da imagem no repositório GitOps.
+4. O Argo CD identifica a alteração no repositório GitOps.
+5. O Argo CD sincroniza os manifests com o cluster Kubernetes.
+6. O Kubernetes atualiza os Pods e utiliza a imagem publicada no registry.
